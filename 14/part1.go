@@ -22,7 +22,7 @@ func main() {
 
 	// Read polymer
 	scanner.Scan()
-	polymerStart := scanner.Text()
+	polymerStr := scanner.Text()
 	// Scan next empty line
 	scanner.Scan()
 
@@ -32,17 +32,21 @@ func main() {
 		pairRules[split[0]] = split[1]
 	}
 
-	for i := 1; i <= STEP_MAX; i++ {
-		polymerStart = CreatePolymer(polymerStart, pairRules)
+	polymerPairCounts := make(map[string]int)
+	for i := 0; i < len(polymerStr)-1; i++ {
+		polymerPairCounts[polymerStr[i:i+2]]++
+	}
+	elementCounts := make(map[string]int)
+	for _, r := range polymerStr {
+		elementCounts[string(r)]++
 	}
 
-	charTally := make(map[rune]int)
-	for _, c := range polymerStart {
-		charTally[c]++
+	for i := 1; i <= STEP_MAX; i++ {
+		polymerPairCounts = CreatePolymer(polymerPairCounts, pairRules, elementCounts)
 	}
 
 	counts := []int{}
-	for _, c := range charTally {
+	for _, c := range elementCounts {
 		counts = append(counts, c)
 	}
 
@@ -53,13 +57,22 @@ func main() {
 	fmt.Println("Result:", max-min)
 }
 
-func CreatePolymer(polymerStart string, pairRules map[string]string) string {
-	newPolymer := ""
-	for i := 0; i < len(polymerStart)-1; i++ {
-		pair := polymerStart[i : i+2]
-		insertElement := pairRules[pair]
-		newPolymer += string(pair[0]) + insertElement
+func CreatePolymer(polymerPairCounts map[string]int, pairRules map[string]string, elementCounts map[string]int) map[string]int {
+	polymerPairCountsNew := make(map[string]int)
+	for pair := range polymerPairCounts {
+		numPairs := polymerPairCounts[pair]
+		insert := pairRules[pair]
+		pair1 := string(pair[0]) + insert
+		pair2 := insert + string(pair[1])
+		polymerPairCountsNew[pair1] += numPairs
+		polymerPairCountsNew[pair2] += numPairs
+		elementCounts[insert] += numPairs
 	}
-	newPolymer += string(polymerStart[len(polymerStart)-1])
-	return newPolymer
+	return polymerPairCountsNew
+}
+
+func DumpPairs(pairs map[string]int) {
+	for k, v := range pairs {
+		fmt.Printf("%s : %d\n", k, v)
+	}
 }
