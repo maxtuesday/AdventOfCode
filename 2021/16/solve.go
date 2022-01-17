@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -20,6 +21,7 @@ func LoadData(filename string) string {
 func main() {
 	input := LoadData(input_file)
 	Part1(input)
+	Part2(input)
 }
 
 func convertHexToBin(hex string) string {
@@ -36,84 +38,126 @@ func convertHexToBin(hex string) string {
 }
 
 func convBinToDec(b string) int {
-	n, _ := strconv.ParseUint(b, 2, 32)
+	n, _ := strconv.ParseUint(b, 2, 64)
 	return int(n)
 }
 
-func parsePacket(bin string, readIndex int) (index int, ver int, lit_val int) {
-	var val = 0
+func parsePacket(bin string, readIndex int) (index int, ver int, lit_val_ret int) {
 	version := convBinToDec(bin[readIndex : readIndex+3])
 	readIndex += 3
 	typeID := convBinToDec(bin[readIndex : readIndex+3])
 	readIndex += 3
-	// fmt.Println("---- NEW PACKET ----")
-	// fmt.Println("Version:", version)
-	// fmt.Println("Type ID:", typeID)
-	// fmt.Println("Read Index:", readIndex)
 
-	if typeID == 4 {
-		// literal value
-		// fmt.Println("Lit Value packet")
+	if typeID == 4 { // literal value (this is the end of recursion)
 		num := bin[readIndex : readIndex+5]
 		num_s := bin[readIndex+1 : readIndex+5]
 		readIndex += 5
-		// fmt.Println("num:", num)
 		for num[0] != '0' {
-			// fmt.Println("num:", num)
 			num = bin[readIndex : readIndex+5]
 			num_s += bin[readIndex+1 : readIndex+5]
 			readIndex += 5
 		}
-		// fmt.Println("num:", num)
-		// fmt.Println("num_s:", num_s)
-		val = convBinToDec(num_s)
-		// fmt.Println(readIndex)
-	} else {
-		// operator
-		// get lenTypeID
+		val := convBinToDec(num_s)
+		return readIndex, version, val
+	} else { // operator
 		lenTypeID := bin[readIndex]
 		readIndex++
+
+		lit_vals := []int{}
 		switch lenTypeID {
 		case '0':
 			// next 15 bits are total len of sub-packet
-			// fmt.Println("++++ Look at total len sub-packets ++++")
 			L := convBinToDec(bin[readIndex : readIndex+15])
-			// fmt.Println("L:", L)
 			readIndex += 15
-			// fmt.Println("Read Index:", readIndex)
-			var n_readIndex, n_ver, _ int
-			n_readIndex, n_ver, _ = parsePacket(bin, readIndex)
+			n_readIndex, n_ver, lit_val := parsePacket(bin, readIndex)
+			lit_vals = append(lit_vals, lit_val)
 			version += n_ver
-			// fmt.Println(n_readIndex, n_ver, l_v)
 			for n_readIndex-readIndex != L {
-				n_readIndex, n_ver, _ = parsePacket(bin, n_readIndex)
+				n_readIndex, n_ver, lit_val = parsePacket(bin, n_readIndex)
+				lit_vals = append(lit_vals, lit_val)
 				version += n_ver
-				// fmt.Println("Version:", n_ver)
 			}
 			readIndex = n_readIndex
 		case '1':
 			// next 11 bits are num of sub-packets following
-			// fmt.Println("++++ Look at N sub-packets ++++")
 			L := convBinToDec(bin[readIndex : readIndex+11])
-			// fmt.Println("L:", L)
 			readIndex += 11
 			for i := 0; i < L; i++ {
-				n_readIndex, n_ver, _ := parsePacket(bin, readIndex)
+				n_readIndex, n_ver, lit_val := parsePacket(bin, readIndex)
+				lit_vals = append(lit_vals, lit_val)
 				readIndex = n_readIndex
 				version += n_ver
-				// fmt.Println("Version:", n_ver)
 			}
 		}
-	}
 
-	// fmt.Println("(Above return) Version:", version)
-	return readIndex, version, val
+		// Perform action on lit_vals based on typeID
+		var val int
+		switch typeID {
+		case 0: // sum
+			val = Sum(lit_vals)
+		case 1: // product
+			val = Prod(lit_vals)
+		case 2: // minimum
+			val = Min(lit_vals)
+		case 3: // maximum
+			val = Max(lit_vals)
+		case 5: // greater than
+			if lit_vals[0] > lit_vals[1] {
+				val = 1
+			} else {
+				val = 0
+			}
+		case 6: // less than
+			if lit_vals[0] < lit_vals[1] {
+				val = 1
+			} else {
+				val = 0
+			}
+		case 7: // equal to
+			if lit_vals[0] == lit_vals[1] {
+				val = 1
+			} else {
+				val = 0
+			}
+		}
+		return readIndex, version, val
+	}
+}
+
+func Sum(a []int) int {
+	sum := 0
+	for _, e := range a {
+		sum += e
+	}
+	return sum
+}
+
+func Prod(a []int) int {
+	prod := 1
+	for _, e := range a {
+		prod *= e
+	}
+	return prod
+}
+
+func Min(a []int) int {
+	sort.Ints(a)
+	return a[0]
+}
+
+func Max(a []int) int {
+	sort.Ints(a)
+	return a[len(a)-1]
 }
 
 func Part1(input string) {
 	bin := convertHexToBin(input)
-	fmt.Println(bin)
 	_, ver, _ := parsePacket(bin, 0)
-
 	fmt.Println("Version Sum:", ver)
+}
+
+func Part2(input string) {
+	bin := convertHexToBin(input)
+	_, _, val := parsePacket(bin, 0)
+	fmt.Println("Val Expr:", val)
 }
