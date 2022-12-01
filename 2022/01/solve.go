@@ -10,52 +10,50 @@ import (
 )
 
 func main() {
+	lines := readLines()
+
+	part1(lines)
+	part2(lines)
+}
+
+func readLines() []string {
 	b, err := os.ReadFile("input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	data := string(b)
-	dataSlice := strings.Split(data, "\n")
-
-	part1(dataSlice)
-	part2(dataSlice)
+	return strings.Split(data, "\n")
 }
 
-func part1(dataSlice []string) {
+func part1(lines []string) {
 	fmt.Printf("Part 1: ")
-	max := 0
-	curSum := 0
-	for _, line := range dataSlice {
-		if line == "" {
-			if curSum > max {
-				max = curSum
-			}
-			curSum = 0
-			continue
-		}
-		num, _ := strconv.Atoi(line)
-		curSum += num
-	}
-
-	fmt.Printf("Ans: %d\n", max)
+	sums := sum(lines)
+	sort.Ints(sums)
+	ans := sums[len(sums)-1]
+	fmt.Printf("Ans: %d\n", ans)
 }
 
-func part2(dataSlice []string) {
+func part2(lines []string) {
 	fmt.Printf("Part 2: ")
-	cals := []int{}
-	curSum := 0
-	for _, line := range dataSlice {
+	sums := sum(lines)
+	sort.Ints(sums)
+	l := len(sums)
+	ans := sums[l-1] + sums[l-2] + sums[l-3]
+	fmt.Printf("Ans: %d\n", ans)
+}
+
+func sum(lines []string) []int {
+	sum := 0
+	sums := []int{}
+	for _, line := range lines {
 		if line == "" {
-			cals = append(cals, curSum)
-			curSum = 0
+			sums = append(sums, sum)
+			sum = 0
 			continue
 		}
 		num, _ := strconv.Atoi(line)
-		curSum += num
+		sum += num
 	}
-	sort.Ints(cals)
-	l := len(cals)
-	ans := cals[l-1] + cals[l-2] + cals[l-3]
-	fmt.Printf("Ans: %d\n", ans)
+	return sums
 }
