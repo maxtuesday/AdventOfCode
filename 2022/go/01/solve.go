@@ -17,7 +17,7 @@ func main() {
 }
 
 func readLines() []string {
-	b, err := os.ReadFile("input.txt")
+	b, err := os.ReadFile("../../inputs/01/input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,20 +27,18 @@ func readLines() []string {
 }
 
 func part1(lines []string) {
-	fmt.Printf("Part 1: ")
 	sums := sum(lines)
 	sort.Ints(sums)
 	ans := sums[len(sums)-1]
-	fmt.Printf("Ans: %d\n", ans)
+	fmt.Printf("Part 1: %d\n", ans)
 }
 
 func part2(lines []string) {
-	fmt.Printf("Part 2: ")
 	sums := sum(lines)
 	sort.Ints(sums)
 	l := len(sums)
 	ans := sums[l-1] + sums[l-2] + sums[l-3]
-	fmt.Printf("Ans: %d\n", ans)
+	fmt.Printf("Part 2: %d\n", ans)
 }
 
 func sum(lines []string) []int {
