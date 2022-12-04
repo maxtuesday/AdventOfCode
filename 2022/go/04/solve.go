@@ -18,22 +18,27 @@ func readInput() string {
 	return string(b)
 }
 
+func parseRanges(line string) ([]int, []int) {
+	parts := strings.Split(line, ",")
+	left := strings.Split(parts[0], "-")
+	a, _ := strconv.Atoi(left[0])
+	b, _ := strconv.Atoi(left[1])
+
+	right := strings.Split(parts[1], "-")
+	c, _ := strconv.Atoi(right[0])
+	d, _ := strconv.Atoi(right[1])
+
+	return []int{a, b}, []int{c, d}
+}
+
 func part1(input string) string {
 	res := 0
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
-		parts := strings.Split(line, ",")
-		left := strings.Split(parts[0], "-")
-		a, _ := strconv.Atoi(left[0])
-		b, _ := strconv.Atoi(left[1])
+		r1, r2 := parseRanges(line)
 
-		right := strings.Split(parts[1], "-")
-		c, _ := strconv.Atoi(right[0])
-		d, _ := strconv.Atoi(right[1])
-
-		if a <= c && c <= b && a <= d && d <= b {
-			res++
-		} else if c <= a && a <= d && c <= b && b <= d {
+		if r1[0] <= r2[0] && r2[1] <= r1[1] ||
+			r2[0] <= r1[0] && r1[1] <= r2[1] {
 			res++
 		}
 	}
@@ -44,16 +49,9 @@ func part2(input string) string {
 	res := 0
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
-		parts := strings.Split(line, ",")
-		left := strings.Split(parts[0], "-")
-		a, _ := strconv.Atoi(left[0])
-		b, _ := strconv.Atoi(left[1])
+		r1, r2 := parseRanges(line)
 
-		right := strings.Split(parts[1], "-")
-		c, _ := strconv.Atoi(right[0])
-		d, _ := strconv.Atoi(right[1])
-
-		if c <= b && a <= d {
+		if r2[0] <= r1[1] && r1[0] <= r2[1] {
 			res++
 		}
 	}
