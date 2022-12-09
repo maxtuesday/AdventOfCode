@@ -16,13 +16,16 @@ func main() {
 
 func readInput() string {
 	b, _ := os.ReadFile("../../inputs/07/input.txt")
-	// b, _ := os.ReadFile("../../inputs/07/small_input.txt")
 	return string(b)
 }
 
 func popDir(path string) string {
 	pathTokens := strings.Split(path, "/")
-	return strings.Join(pathTokens[:len(pathTokens)-1], "/")
+	path = strings.Join(pathTokens[:len(pathTokens)-1], "/")
+	if path == "" {
+		path = "/"
+	}
+	return path
 }
 
 func pushDir(path, dir string) string {
@@ -33,20 +36,9 @@ func pushDir(path, dir string) string {
 	return path
 }
 
-// Has some bug with the large input where the root dir
-// does not get the correct total directory size
 func parseInput(input string) map[string]int {
-	/*
-		Pattern:
-		cd into dir
-		ls
-		if no more dir, pop up until next dir
-	*/
-
-	// skip the first cd
 	lines := strings.Split(input, "\n")[1:]
 	fs := map[string]int{}
-	sum := 0
 	path := "/"
 	for _, line := range lines {
 		tokens := strings.Split(line, " ")
@@ -55,54 +47,33 @@ func parseInput(input string) map[string]int {
 			if cmd == "cd" {
 				dir := tokens[2]
 				switch dir {
-				case "..": // pop up one dir
-					// start "flattening" dir sizes
-					fs[path] += sum
-					sum = fs[path]
+				case "..":
 					path = popDir(path)
-					if path == "" {
-						path = "/"
-					}
-				default: // move to this directory
-					// when we cd into a dir, we have listed all files at the current path
-					// add current list of file sizes to current path
-					fs[path] += sum
-					// reset sum since we will be at a different level
+				default:
 					path = pushDir(path, dir)
 				}
-			} else {
-				// list operation, get to baseline for current directory
-				sum = 0
 			}
-		} else { // file or dir
+		} else {
 			if size, err := strconv.Atoi(tokens[0]); err == nil {
-				// file
-				sum += size
+				fs[path] += size
 			}
 		}
 	}
 
-	// we are done. Might be at the bottom of a directory
-	// let's bubble up and add up this sum to parent directories
-	// This is probably where that bug metioned above is
-	for path != "" {
-		fs[path] += sum
-		path = popDir(path)
+	originalFS := map[string]int{}
+	for path, size := range fs {
+		originalFS[path] = size
 	}
-	fs["/"] += sum
-	return fs
-}
 
-func getTotalSize(input string) int {
-	sum := 0
-	lines := strings.Split(input, "\n")
-	for _, line := range lines {
-		tokens := strings.Split(line, " ")
-		if size, err := strconv.Atoi(tokens[0]); err == nil {
-			sum += size
+	// Apply flattening of child dirs
+	for path, size := range originalFS {
+		for path != "/" {
+			path = popDir(path)
+			fs[path] += size
 		}
 	}
-	return sum
+
+	return fs
 }
 
 func part1(input string) string {
@@ -118,12 +89,11 @@ func part1(input string) string {
 }
 
 func part2(input string) string {
-	totalUsed := getTotalSize(input)
-	fs := parseInput(input)
-
 	TOTAL_DISK_SPACE := 70000000
 	UNUSED_REQUIRED := 30000000
-	remainingSpace := TOTAL_DISK_SPACE - totalUsed
+
+	fs := parseInput(input)
+	remainingSpace := TOTAL_DISK_SPACE - fs["/"]
 	minRequired := UNUSED_REQUIRED - remainingSpace
 
 	sizes := []int{}
