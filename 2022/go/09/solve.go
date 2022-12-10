@@ -36,93 +36,26 @@ var dirs = map[string][]int{
 	"R": {0, 1},
 }
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
+func getMagnitude(p1, p2 int) int {
+	d := p1 - p2
+	if -2 < d && d < 2 {
+		return 0
 	}
-	return x
+	if d > 0 {
+		return -1
+	} else {
+		return 1
+	}
 }
 
-// Can this be cleaned up?
 func updateTail(head, tail []int) {
-	// if head is away by at least 2 spaces
-	//  we should update
-	dy := abs(head[0] - tail[0])
-	dx := abs(head[1] - tail[1])
-	if (dy < 2 && dx < 2) ||
-		(dy == 1 && dx == 1) { // no update
+	dy := getMagnitude(head[0], tail[0])
+	dx := getMagnitude(head[1], tail[1])
+	if dy == 0 && dx == 0 {
 		return
 	}
-
-	if dy == 0 {
-		// horizontal
-		dx = head[1] - tail[1]
-		if dx > 0 {
-			tail[1] = head[1] - 1
-		} else {
-			tail[1] = head[1] + 1
-		}
-		return
-	}
-
-	if dx == 0 {
-		// vertical
-		dy = head[0] - tail[0]
-		if dy > 0 {
-			tail[0] = head[0] - 1
-		} else {
-			tail[0] = head[0] + 1
-		}
-		return
-	}
-
-	if dy == 2 && dx == 2 {
-		dy = head[0] - tail[0]
-		if dy > 0 {
-			tail[0] = head[0] - 1
-		} else {
-			tail[0] = head[0] + 1
-		}
-		dx = head[1] - tail[1]
-		if dx > 0 {
-			tail[1] = head[1] - 1
-		} else {
-			tail[1] = head[1] + 1
-		}
-		return
-	}
-
-	// diagonal update
-	// cases
-	// dy =  2, dx =  1
-	// dy =  2, dx = -1
-	// dy = -2, dx =  1
-	// dy = -2, dx = -1
-	if dy == 2 {
-		dy = head[0] - tail[0]
-		if dy > 0 {
-			tail[0] = head[0] - 1
-		} else {
-			tail[0] = head[0] + 1
-		}
-		tail[1] = head[1]
-		return
-	}
-
-	// dy =  1, dx =  2
-	// dy = -1, dx =  2
-	// dy =  1, dx = -2
-	// dy = -1, dx = -2
-	if dx == 2 {
-		dx = head[1] - tail[1]
-		if dx > 0 {
-			tail[1] = head[1] - 1
-		} else {
-			tail[1] = head[1] + 1
-		}
-		tail[0] = head[0]
-		return
-	}
+	tail[0] = head[0] + dy
+	tail[1] = head[1] + dx
 }
 
 func moveRope(input string, numKnots int) int {
