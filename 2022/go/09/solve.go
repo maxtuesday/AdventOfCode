@@ -125,56 +125,44 @@ func updateTail(head, tail []int) {
 	}
 }
 
-func part1(input string) string {
+func moveRope(input string, numKnots int) int {
 	visited := map[[2]int]int{}
-
-	head := []int{0, 0}
-	tail := []int{0, 0}
-
+	knots := [][]int{}
+	for i := 0; i < numKnots; i++ {
+		knots = append(knots, []int{0, 0})
+	}
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
-		tokens := strings.Split(line, " ")
-		dir := tokens[0]
-		steps, _ := strconv.Atoi(tokens[1])
-		change := dirs[dir]
-		for i := 0; i < steps; i++ {
-			head[0] += change[0]
-			head[1] += change[1]
-			// update tail
-			updateTail(head, tail)
-			visited[[2]int{tail[0], tail[1]}]++
-		}
-		// printVisited(visited, MIN_W, MIN_H, MAX_W, MAX_H)
+		move(line, knots, visited)
 	}
-	return fmt.Sprintf("%d", len(visited))
+	return len(visited)
+}
+
+func move(line string, knots [][]int, visited map[[2]int]int) {
+	tokens := strings.Split(line, " ")
+	dir := tokens[0]
+	steps, _ := strconv.Atoi(tokens[1])
+	change := dirs[dir]
+	for i := 0; i < steps; i++ {
+		knots[0][0] += change[0]
+		knots[0][1] += change[1]
+		// update tail
+		for i := 1; i < len(knots); i++ {
+			updateTail(knots[i-1], knots[i])
+		}
+		tail := knots[len(knots)-1]
+		visited[[2]int{tail[0], tail[1]}]++
+	}
+}
+
+func part1(input string) string {
+	ans := moveRope(input, 2)
+	return fmt.Sprintf("%d", ans)
 }
 
 func part2(input string) string {
-	visited := map[[2]int]int{}
-
-	knots := [][]int{}
-	for i := 0; i < 10; i++ {
-		knots = append(knots, []int{0, 0})
-	}
-
-	lines := strings.Split(input, "\n")
-	for _, line := range lines {
-		tokens := strings.Split(line, " ")
-		dir := tokens[0]
-		steps, _ := strconv.Atoi(tokens[1])
-		change := dirs[dir]
-		for i := 0; i < steps; i++ {
-			knots[0][0] += change[0]
-			knots[0][1] += change[1]
-			// update tail
-			for i := 1; i < len(knots); i++ {
-				updateTail(knots[i-1], knots[i])
-			}
-			last := knots[len(knots)-1]
-			visited[[2]int{last[0], last[1]}]++
-		}
-	}
-	return fmt.Sprintf("%d", len(visited))
+	ans := moveRope(input, 10)
+	return fmt.Sprintf("%d", ans)
 }
 
 /*
