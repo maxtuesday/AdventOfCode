@@ -9,8 +9,7 @@ import (
 
 func main() {
 	input := readInput()
-	fmt.Printf("Part 1: %s\n", part1(input))
-	fmt.Printf("Part 2: %s\n", part2(input))
+	solve(input)
 }
 
 func readInput() string {
@@ -26,11 +25,30 @@ type CPU struct {
 	Display        [][]string
 }
 
+func NewCPU() *CPU {
+	display := make([][]string, 6)
+	for i := range display {
+		display[i] = make([]string, 40)
+		for j := range display[i] {
+			display[i][j] = "."
+		}
+	}
+	return &CPU{
+		X:       1,
+		Display: display,
+	}
+}
+
+func (cpu *CPU) Add(num int) {
+	cpu.X += num
+}
+
 func (cpu *CPU) UpdateCycle() {
 	cpu.Cycle++
 	if 20 <= cpu.Cycle && (cpu.Cycle-20)%40 == 0 {
 		cpu.SignalStrength += cpu.Cycle * cpu.X
 	}
+	cpu.UpdateDisplay()
 }
 
 func (cpu *CPU) UpdateDisplay() {
@@ -54,8 +72,8 @@ func (cpu *CPU) PrintDisplay() {
 	fmt.Println()
 }
 
-func part1(input string) string {
-	cpu := &CPU{X: 1}
+func solve(input string) {
+	cpu := NewCPU()
 	lines := strings.Split(input, "\n")
 	for _, line := range lines {
 		if line == "noop" {
@@ -64,40 +82,10 @@ func part1(input string) string {
 			cpu.UpdateCycle()
 			cpu.UpdateCycle()
 			n, _ := strconv.Atoi(strings.Split(line, " ")[1])
-			cpu.X += n
+			cpu.Add(n)
 		}
 	}
-	return fmt.Sprintf("%d", cpu.SignalStrength)
-}
-
-func part2(input string) string {
-	display := make([][]string, 6)
-	for i := range display {
-		display[i] = make([]string, 40)
-		for j := range display[i] {
-			display[i][j] = "."
-		}
-	}
-	cpu := &CPU{
-		X:       1,
-		Display: display,
-	}
-
-	lines := strings.Split(input, "\n")
-	for _, line := range lines {
-		if line == "noop" {
-			cpu.UpdateCycle()
-			cpu.UpdateDisplay()
-		} else {
-			cpu.UpdateCycle()
-			cpu.UpdateDisplay()
-			cpu.UpdateCycle()
-			cpu.UpdateDisplay()
-			n, _ := strconv.Atoi(strings.Split(line, " ")[1])
-			cpu.X += n
-		}
-	}
-
+	fmt.Printf("Part 1: %d\n", cpu.SignalStrength)
+	fmt.Printf("Part 2:\n")
 	cpu.PrintDisplay()
-	return "^"
 }
