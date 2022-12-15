@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/big"
 	"os"
 	"sort"
 	"strconv"
@@ -16,8 +15,8 @@ func main() {
 }
 
 func readInput() string {
-	// b, _ := os.ReadFile("../../inputs/11/input.txt")
-	b, _ := os.ReadFile("../../inputs/11/small_input.txt")
+	b, _ := os.ReadFile("../../inputs/11/input.txt")
+	// b, _ := os.ReadFile("../../inputs/11/small_input.txt")
 	// b, _ := os.ReadFile("../../inputs/11/large_input.txt")
 	return string(b)
 }
@@ -28,7 +27,7 @@ type Operation struct {
 }
 
 type Monkey struct {
-	Items        []*big.Int
+	Items        []int
 	Operation    Operation
 	TestFactor   int
 	Destinations []int
@@ -46,10 +45,10 @@ func newMonkey(s string) *Monkey {
 	startingItemsStr := strings.Split(parts[0], ":")[1]
 	str := strings.ReplaceAll(startingItemsStr, ", ", " ")
 	fields := strings.Fields(str)
-	items := []*big.Int{}
+	items := []int{}
 	for _, item := range fields {
 		n, _ := strconv.Atoi(item)
-		items = append(items, big.NewInt(int64(n)))
+		items = append(items, n)
 	}
 	opertaionStr := strings.Split(parts[1], "= old ")[1]
 	op := Operation{
@@ -89,28 +88,42 @@ func printMonkeys(monkeys []*Monkey) {
 	}
 }
 
-func applyOperation(monkey *Monkey, item *big.Int) *big.Int {
+func applyOperation(monkey *Monkey, item int) int {
 	operation := monkey.Operation
 	factor := item
 	if operation.Factor != "old" {
-		n, _ := strconv.Atoi(operation.Factor)
-		factor = big.NewInt(int64(n))
+		factor, _ = strconv.Atoi(operation.Factor)
 	}
 	switch operation.Op {
 	case "+":
-		return item.Add(item, factor)
+		return item + factor
 	case "-":
-		return item.Sub(item, factor)
+		return item - factor
 	case "*":
-		return item.Mul(item, factor)
+		return item * factor
 	case "/":
-		return item.Div(item, factor)
+		return item / factor
 	default:
 		panic(fmt.Sprintf("Not supported operation: %s\n", operation.Op))
 	}
 }
 
-func monkeyRound(monkeys []*Monkey, worryFactor int, counts []int) {
+func GCD(a, b int) int {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
+func LCM_Monkeys(monkeys []*Monkey) int {
+	res := 1
+	for _, monkey := range monkeys {
+		res = (res * monkey.TestFactor) / GCD(res, monkey.TestFactor)
+	}
+	return res
+}
+
+func monkeyRound(monkeys []*Monkey, worryFactor int, counts []int, lcm int) {
 	// Loop over monkeys, per monkey:
 	//   1. Pop item from monkey items
 	//   2. apply operation to item value
@@ -120,34 +133,27 @@ func monkeyRound(monkeys []*Monkey, worryFactor int, counts []int) {
 	for i, monkey := range monkeys {
 		counts[i] += len(monkey.Items)
 		for _, item := range monkey.Items {
-			newItemValue := applyOperation(monkey, item)
-			newItemValue.Div(newItemValue, big.NewInt(int64(worryFactor)))
+			newItemValue := (applyOperation(monkey, item) / worryFactor) % lcm
 			var destMonkey *Monkey
-
-			test := big.NewInt(0)
-			test.Set(newItemValue)
-
-			if test.
-				Mod(newItemValue, big.NewInt(int64(monkey.TestFactor))).
-				Cmp(big.NewInt(int64(0))) == 0 {
+			if newItemValue%monkey.TestFactor == 0 {
 				destMonkey = monkeys[monkey.Destinations[0]]
 			} else {
 				destMonkey = monkeys[monkey.Destinations[1]]
 			}
 			destMonkey.Items = append(destMonkey.Items, newItemValue)
 		}
-		monkey.Items = []*big.Int{}
+		monkey.Items = []int{}
 	}
 }
 
 func part1(input string) string {
 	monkeys := parseMonkeys(input)
+	lcm := LCM_Monkeys(monkeys)
 	counts := make([]int, len(monkeys))
 	for i := 0; i < 20; i++ {
-		monkeyRound(monkeys, 3, counts)
+		monkeyRound(monkeys, 3, counts, lcm)
 	}
 
-	fmt.Printf("counts: %v\n", counts)
 	sort.Ints(counts)
 
 	l := len(counts)
@@ -158,12 +164,12 @@ func part1(input string) string {
 
 func part2(input string) string {
 	monkeys := parseMonkeys(input)
+	lcm := LCM_Monkeys(monkeys)
 	counts := make([]int, len(monkeys))
 	for i := 1; i <= 10000; i++ {
-		monkeyRound(monkeys, 1, counts)
+		monkeyRound(monkeys, 1, counts, lcm)
 	}
 
-	fmt.Printf("counts: %v\n", counts)
 	sort.Ints(counts)
 
 	l := len(counts)
