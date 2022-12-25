@@ -17,7 +17,7 @@ func main() {
 }
 
 func readLines() []string {
-	b, err := os.ReadFile("../../inputs/01/input.txt")
+	b, err := os.ReadFile("../../input/01/input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}

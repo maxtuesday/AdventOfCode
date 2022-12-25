@@ -15,9 +15,7 @@ func main() {
 }
 
 func readInput() string {
-	b, _ := os.ReadFile("../../inputs/11/input.txt")
-	// b, _ := os.ReadFile("../../inputs/11/small_input.txt")
-	// b, _ := os.ReadFile("../../inputs/11/large_input.txt")
+	b, _ := os.ReadFile("../../input/11/input.txt")
 	return string(b)
 }
 

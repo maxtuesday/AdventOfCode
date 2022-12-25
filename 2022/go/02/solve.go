@@ -13,7 +13,7 @@ func main() {
 }
 
 func readInput() string {
-	b, _ := os.ReadFile("../../inputs/02/input.txt")
+	b, _ := os.ReadFile("../../input/02/input.txt")
 	return string(b)
 }
 

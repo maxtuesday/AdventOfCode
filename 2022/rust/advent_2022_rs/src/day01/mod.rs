@@ -4,7 +4,7 @@ pub struct Solution;
 
 impl Solution {
     fn solve_part_1() {
-        let text = fs::read_to_string("./../../inputs/01/input.txt").unwrap();
+        let text = fs::read_to_string("./../../input/01/input.txt").unwrap();
         let calories = text.split("\n\n")
             .map(|group| {
                 group.lines()
@@ -17,7 +17,7 @@ impl Solution {
     }
 
     fn solve_part_2() {
-        let text = fs::read_to_string("./../../inputs/01/input.txt").unwrap();
+        let text = fs::read_to_string("./../../input/01/input.txt").unwrap();
         let mut calories: Vec<_> = text.split("\n\n")
             .map(|group| {
                 group.lines()
