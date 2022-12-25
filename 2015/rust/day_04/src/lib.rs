@@ -1,6 +1,9 @@
 use crypto::digest::Digest;
 use crypto::md5::Md5;
 
+// Used this post for reference on how to speed up this code:
+// https://gist.github.com/gkbrk/2e4835e3a17b3fb6e1e7
+
 pub fn process_part_1(input: &str) -> String {
     let key = input.as_bytes();
     let mut hasher = Md5::new();
