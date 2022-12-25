@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 fn is_nice_part_1(s: &str) -> bool {
     let chars =s.chars().collect::<Vec<char>>();
@@ -36,35 +36,25 @@ pub fn process_part_1(input: &str) -> String {
 fn is_nice_part_2(s: &str) -> bool {
     let chars = s.chars().collect::<Vec<char>>();
 
-    // - It contains a pair of any two letters that appears at
-    //   least twice in the string without overlapping,
-    //    like xyxy (xy) or aabcdefgaa (aa), but not like aaa (aa, but it overlaps).
-    let pairs = chars.windows(2)
+    let non_overlapping_pairs = chars.windows(2)
         .enumerate()
-        .map(|(idx, window)| {
-            let pair = window.iter().collect::<String>();
-            (pair, idx)
-        })
-        .fold(HashMap::new(), |mut map: HashMap<String, Vec<usize>>, val| {
-            map.entry(val.0)
-                .and_modify(|indices| indices.push(val.1))
-                .or_insert(Vec::from([val.1]));
-            map
-        });
-
-    let nonoverlapping_pairs = pairs.iter()
-        .filter(|(_, idxs)| {
-            idxs.len() >= 2 && idxs[0] + 1 != *idxs.last().unwrap()
+        .map(|(idx, window)| (idx, window.iter().collect::<String>()))
+        .filter(|pair| {
+            if let Some(idx) = s.rfind(pair.1.as_str()) {
+                pair.0 != idx && pair.0 + 1 != idx
+            } else {
+                false
+            }
         })
         .count();
+    if non_overlapping_pairs == 0 {
+        return false
+    }
 
-    // - It contains at least one letter which repeats with exactly one letter between them,
-    //    like xyx, abcdefeghi (efe), or even aaa.
     let split_repeats = chars.windows(3)
         .filter(|window| window[0] == window[2])
         .count();
-
-    nonoverlapping_pairs >= 1 && split_repeats >= 1
+    split_repeats > 0
 }
 
 pub fn process_part_2(input: &str) -> String {
