@@ -26,10 +26,6 @@ impl FromStr for GateType {
     }
 }
 
-// Types of gates:
-// - AND, OR        (2 inputs)
-// - LSHIFT. RSHIFT (2 inputs)
-// - NOT            (1 input)
 #[derive(Clone, Debug)]
 struct Gate {
     inputs: Vec<String>,
@@ -64,37 +60,23 @@ impl FromStr for Gate {
     }
 }
 
-// #[derive(Debug, Clone)]
-// struct Wire {
-//     signal: Option<u16>,
-// }
-
-pub fn process_part_1(input: &str) -> String {
-    let mut wires: HashMap<String, Option<u16>> = HashMap::new();
-    let mut gates = input.lines()
-        .map(|line| line.parse::<Gate>().unwrap())
-        .collect::<Vec<Gate>>();
-    // dbg!(&gates);
-
-    for gate in &gates {
+fn load_wires(gates: &mut Vec<Gate>, wires: &mut HashMap<String, Option<u16>>) {
+    for gate in gates.iter() {
         for gate_input in &gate.inputs {
             wires.insert(gate_input.to_string(), gate_input.parse::<u16>().ok());
         }
         wires.insert(gate.output.to_string(), None);
     }
+}
 
-    dbg!(&wires);
-    dbg!(&gates);
-
+fn resolve_gates(gates: &mut Vec<Gate>, wires: &mut HashMap<String, Option<u16>>) {
     loop {
         let unresolved_gates = gates.iter()
-            .filter(|gate| wires.get(gate.output.as_str()).is_none())
+            .filter(|gate| wires.get(gate.output.as_str()).unwrap().is_none())
             .collect::<Vec<_>>();
         if unresolved_gates.len() == 0 {
             break;
         }
-
-        dbg!(&unresolved_gates);
 
         for gate in unresolved_gates {
             let num_inputs = gate.inputs.len();
@@ -115,38 +97,54 @@ pub fn process_part_1(input: &str) -> String {
                     });
             }
         }
-
-        dbg!(&wires);
-        todo!("In loop, break")
     }
+}
 
-    todo!()
+pub fn process_part_1(input: &str) -> String {
+    let mut wires: HashMap<String, Option<u16>> = HashMap::new();
+    let mut gates = input.lines()
+        .map(|line| line.parse::<Gate>().unwrap())
+        .collect::<Vec<Gate>>();
+
+    load_wires(&mut gates, &mut wires);
+    resolve_gates(&mut gates, &mut wires);
+
+    wires.get("a").unwrap().unwrap().to_string()
 }
 
 pub fn process_part_2(input: &str) -> String {
-    todo!()
+    let mut wires: HashMap<String, Option<u16>> = HashMap::new();
+    let mut gates = input.lines()
+        .map(|line| line.parse::<Gate>().unwrap())
+        .collect::<Vec<Gate>>();
+    let wire_a_signal: u16 = 16076;
+
+    load_wires(&mut gates, &mut wires);
+
+    wires.entry("b".to_string())
+        .and_modify(|wire| {
+            *wire = Some(wire_a_signal)
+        });
+
+    resolve_gates(&mut gates, &mut wires);
+
+    wires.get("a").unwrap().unwrap().to_string()
 }
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
     use super::*;
-
-    const INPUT: &str = "123 -> x
-456 -> y
-x AND y -> d
-x OR y -> e
-x LSHIFT 2 -> f
-y RSHIFT 2 -> g
-NOT x -> h
-NOT y -> i";
 
     #[test]
     fn part1() {
-        assert_eq!(process_part_1(INPUT), "");
+        let input: String = fs::read_to_string("./../../input/07/input.txt").unwrap();
+        assert_eq!(process_part_1(&input), "16076");
     }
 
     #[test]
     fn part2() {
-        assert_eq!(process_part_2(""), "");
+        let input: String = fs::read_to_string("./../../input/07/input.txt").unwrap();
+        assert_eq!(process_part_2(&input), "2797");
     }
 }
