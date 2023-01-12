@@ -1,3 +1,5 @@
+// Credit: https://markheath.net/post/advent-of-code-day20
+
 pub fn process_part_1(input: &str) -> String {
     let target = input.parse::<usize>().unwrap();
     let fact = 2 * 3 * 5 * 7 * 11;
