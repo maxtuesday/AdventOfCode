@@ -42,13 +42,11 @@ fn parse(input: &str) -> Vec<Game> {
                 rocks: HashMap::from([(Color::Red, 0), (Color::Green, 0), (Color::Blue, 0)]),
             };
 
-            rest.split(";").for_each(|set| {
-                set.split(",").for_each(|rock| {
-                    let (count, color) = rock.trim().split_once(" ").unwrap();
-                    let count = count.parse::<usize>().unwrap();
-                    let color = Color::from(color);
-                    game.rocks.entry(color).and_modify(|c| *c = max(*c, count));
-                });
+            rest.replace(";", ",").split(",").for_each(|rock| {
+                let (count, color) = rock.trim().split_once(" ").unwrap();
+                let count = count.parse::<usize>().unwrap();
+                let color = Color::from(color);
+                game.rocks.entry(color).and_modify(|c| *c = max(*c, count));
             });
 
             game
@@ -65,7 +63,7 @@ fn part1(input: &str) -> usize {
                 && game.rocks.get(&Color::Blue).unwrap() <= &14
         })
         .map(|game| game.id)
-        .sum::<usize>()
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
