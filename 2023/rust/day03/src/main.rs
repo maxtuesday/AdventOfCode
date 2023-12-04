@@ -13,15 +13,36 @@ fn prepare(input: &str) -> Vec<Vec<char>> {
         .collect::<Vec<_>>()
 }
 
+fn collect_adjacent_symbols(
+    grid: &Vec<Vec<char>>,
+    r: usize,
+    c: usize,
+) -> Vec<(usize, usize, char)> {
+    let rows = grid.len() as i32;
+    let cols = grid[0].len() as i32;
+    let mut symbols: Vec<(usize, usize, char)> = Vec::new();
+    for i in -1..=1 {
+        for j in -1..=1 {
+            let rr = (r as i32) + i;
+            let cc = (c as i32) + j;
+            if rr < 0 || rr >= rows || cc < 0 || cc >= cols {
+                continue;
+            }
+            match grid[rr as usize][cc as usize] {
+                '0'..='9' | '.' => {}
+                ch => symbols.push((rr as usize, cc as usize, ch)),
+            }
+        }
+    }
+    return symbols;
+}
+
 fn part1(input: &str) -> u32 {
     let mut num = String::new();
     let mut is_adjacent = false;
     let mut nums: Vec<u32> = Vec::new();
 
     let grid = prepare(input);
-
-    let rows = grid.len() as i32;
-    let cols = grid[0].len() as i32;
 
     for (r, row) in grid.iter().enumerate() {
         for (c, ch) in row.iter().enumerate() {
@@ -41,19 +62,8 @@ fn part1(input: &str) -> u32 {
                 continue;
             }
             // check if digit is near symbol
-            for i in -1..=1 {
-                for j in -1..=1 {
-                    let rr = (r as i32) + i;
-                    let cc = (c as i32) + j;
-                    if rr < 0 || rr >= rows || cc < 0 || cc >= cols {
-                        continue;
-                    }
-                    match grid[rr as usize][cc as usize] {
-                        '0'..='9' | '.' => {}
-                        _ => is_adjacent = true,
-                    }
-                }
-            }
+            let symbols = collect_adjacent_symbols(&grid, r, c);
+            is_adjacent = symbols.len() > 0;
         }
     }
 
@@ -67,9 +77,6 @@ fn part2(input: &str) -> u32 {
     let mut is_adjacent = false;
     let mut gears: HashMap<(usize, usize), Vec<u32>> = HashMap::new();
     let mut cur_gears: Vec<(usize, usize)> = Vec::new();
-
-    let rows = grid.len() as i32;
-    let cols = grid[0].len() as i32;
 
     for (r, row) in grid.iter().enumerate() {
         for (c, ch) in row.iter().enumerate() {
@@ -96,22 +103,12 @@ fn part2(input: &str) -> u32 {
                 continue;
             }
             // check if digit is near symbol
-            for i in -1..=1 {
-                for j in -1..=1 {
-                    let rr = (r as i32) + i;
-                    let cc = (c as i32) + j;
-                    if rr < 0 || rr >= rows || cc < 0 || cc >= cols {
-                        continue;
-                    }
-                    match grid[rr as usize][cc as usize] {
-                        '0'..='9' | '.' => {}
-                        _ => {
-                            cur_gears.push((rr as usize, cc as usize));
-                            is_adjacent = true
-                        }
-                    }
-                }
-            }
+            let gears = collect_adjacent_symbols(&grid, r, c)
+                .into_iter()
+                .filter(|(_, _, ch)| *ch == '*')
+                .map(|(r, c, _)| (r, c)).collect::<Vec<_>>();
+            is_adjacent = gears.len() > 0;
+            cur_gears.extend(gears);
         }
     }
 
