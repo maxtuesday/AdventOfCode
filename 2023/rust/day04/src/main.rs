@@ -1,8 +1,9 @@
-use std::collections::{HashSet, HashMap};
+use std::{cmp::min, collections::HashSet};
 
 fn main() {
     let input = include_str!("../../../input/day_04.txt");
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 fn parse_nums(nums: &str) -> HashSet<u32> {
@@ -13,34 +14,50 @@ fn parse_nums(nums: &str) -> HashSet<u32> {
 }
 
 struct Card {
-    id: u32,
-    matches: u32,
+    matches: usize,
+}
+
+impl Card {
+    fn score(&self) -> usize {
+        if self.matches > 0 {
+            1 << self.matches - 1
+        } else {
+            0
+        }
+    }
 }
 
 impl From<&str> for Card {
     fn from(value: &str) -> Self {
-        let (card, nums) = value
+        let (_, nums) = value
             .split_once(":")
             .expect("Card #: should prefix list of numbers");
-        let id = card
-            .split(" ")
-            .last()
-            .expect("there should be a card id")
-            .parse::<u32>()
-            .expect("should be a number");
         let (left, right) = nums
             .split_once("|")
             .expect("number lists should be separated with |");
         let left = parse_nums(left);
         let right = parse_nums(right);
         let matches = left.intersection(&right).collect::<Vec<_>>().len();
-        let matches = if matches > 0 { 1 << matches - 1 } else { 0 };
-        Card { id, matches }
+        Card { matches }
     }
 }
 
-fn part1(input: &str) -> u32 {
-    input.lines().map(|line| Card::from(line).matches).sum()
+fn part1(input: &str) -> usize {
+    input.lines().map(|line| Card::from(line).score()).sum()
+}
+
+fn part2(input: &str) -> usize {
+    let cards = input.lines().map(Card::from).collect::<Vec<_>>();
+    let mut card_counts: Vec<usize> = vec![1; cards.len()];
+
+    for (i, card) in cards.iter().enumerate() {
+        let range_right = min(cards.len() - i - 1, card.matches);
+        for m in 1..=range_right {
+            card_counts[i + m] += card_counts[i];
+        }
+    }
+
+    card_counts.iter().sum()
 }
 
 #[cfg(test)]
@@ -57,5 +74,10 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
     #[test]
     fn test_part1_sample() {
         assert_eq!(part1(INPUT), 13);
+    }
+
+    #[test]
+    fn test_part2_sample() {
+        assert_eq!(part2(INPUT), 30);
     }
 }
