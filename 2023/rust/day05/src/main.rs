@@ -1,4 +1,4 @@
-use std::str::Lines;
+use std::{str::Lines, time::Instant};
 
 fn main() {
     let input = include_str!("../../../input/day_05.txt");
@@ -13,19 +13,12 @@ struct Range {
     len: usize,
 }
 
-#[derive(Debug)]
-struct Almanac {
-    seeds: Vec<usize>,
-    maps: Vec<Vec<Range>>,
-}
-
-fn parse(input: &str) -> Almanac {
+fn parse(input: &str) -> (Vec<usize>, Vec<Vec<Range>>) {
     let mut lines = input.lines();
     let first = lines.next();
     let seeds = parse_seeds(first.unwrap());
     lines.next(); // skip next empty line
 
-    // let mut maps:Vec<Vec<Range>> = Vec::from(Vec::new());
     let mut maps: Vec<Vec<Range>> = Vec::new();
     while let Some(line) = lines.next() {
         match line {
@@ -35,8 +28,7 @@ fn parse(input: &str) -> Almanac {
             }
         }
     }
-
-    Almanac { seeds, maps }
+    (seeds, maps)
 }
 
 fn parse_seeds(line: &str) -> Vec<usize> {
@@ -68,53 +60,58 @@ fn parse_ranges(lines: &mut Lines<'_>) -> Vec<Range> {
     ranges
 }
 
-fn explore_path(n: usize, map_idx: usize, almanac: &Almanac) -> usize {
-    if map_idx >= almanac.maps.len() {
-        return n;
-    }
-    // Find if we exist in any of the ranges given
-    for range in &almanac.maps[map_idx] {
-        if range.src <= n && n < range.src + range.len {
-            // n is in the range source range.
-            // Map it to the destination.
-            let diff = n - range.src;
-            let dst = range.dst + diff;
-            return explore_path(dst, map_idx + 1, almanac);
-        }
-    }
-    // else we did not find it in any ranges we will, so it is mapped to the same value
-    explore_path(n, map_idx + 1, almanac)
-}
-
 fn part1(input: &str) -> usize {
-    let almanac = parse(input);
-    almanac
-        .seeds
-        .iter()
-        .map(|seed| explore_path(seed.clone(), 0, &almanac))
+    let (seeds, maps) = parse(input);
+    seeds
+        .into_iter()
+        .map(|seed| {
+            maps.iter().fold(seed, |seed, map| {
+                let range = map
+                    .iter()
+                    .find(|range| range.src <= seed && seed < range.src + range.len);
+                match range {
+                    Some(r) => r.dst + (seed - r.src),
+                    None => seed,
+                }
+            })
+        })
         .min()
         .expect("at least one number")
 }
 
 fn part2(input: &str) -> usize {
-    let almanac = parse(input);
+    let (seeds, maps) = parse(input);
     // prepare seeds
-    let seed_ranges = almanac
-        .seeds.as_slice()
+    let seed_ranges = seeds
+        .as_slice()
         .chunks(2)
         .map(|chunk| chunk[0]..chunk[0] + chunk[1] - 1)
         .collect::<Vec<_>>();
 
-    seed_ranges
-        .iter()
-        .flat_map(|r| {
-            r.clone()
-                .into_iter()
-                .map(|s| explore_path(s, 0, &almanac))
-                .collect::<Vec<_>>()
-        })
-        .min()
-        .expect("at least one number")
+    // Try backwards.
+    // Start from location 0..location_max
+    // If we find a Seed in one of the ranges, that is our min location
+    let start = Instant::now();
+    let mut location: usize = 0;
+    loop {
+        let seed = maps.iter().rev().fold(location, |loc, map| {
+            let range = map
+                .iter()
+                .find(|&range| range.dst <= loc && loc < range.dst + range.len);
+            match range {
+                Some(r) => r.src + (loc - r.dst),
+                None => loc,
+            }
+        });
+        let seed = seed_ranges.iter().find(|range| range.contains(&seed));
+        if seed.is_some() {
+            break;
+        }
+        location += 1;
+    }
+    let duration = start.elapsed();
+    println!("Duration: {:?}", duration);
+    location
 }
 
 #[cfg(test)]
