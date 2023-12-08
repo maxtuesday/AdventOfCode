@@ -3,6 +3,7 @@ use std::str::Lines;
 fn main() {
     let input = include_str!("../../../input/day_05.txt");
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 #[derive(Debug)]
@@ -67,16 +68,6 @@ fn parse_ranges(lines: &mut Lines<'_>) -> Vec<Range> {
     ranges
 }
 
-fn part1(input: &str) -> usize {
-    let almanac = parse(input);
-    almanac
-        .seeds
-        .iter()
-        .map(|seed| explore_path(seed.clone(), 0, &almanac))
-        .min()
-        .expect("at least one number")
-}
-
 fn explore_path(n: usize, map_idx: usize, almanac: &Almanac) -> usize {
     if map_idx >= almanac.maps.len() {
         return n;
@@ -93,6 +84,37 @@ fn explore_path(n: usize, map_idx: usize, almanac: &Almanac) -> usize {
     }
     // else we did not find it in any ranges we will, so it is mapped to the same value
     explore_path(n, map_idx + 1, almanac)
+}
+
+fn part1(input: &str) -> usize {
+    let almanac = parse(input);
+    almanac
+        .seeds
+        .iter()
+        .map(|seed| explore_path(seed.clone(), 0, &almanac))
+        .min()
+        .expect("at least one number")
+}
+
+fn part2(input: &str) -> usize {
+    let almanac = parse(input);
+    // prepare seeds
+    let seed_ranges = almanac
+        .seeds.as_slice()
+        .chunks(2)
+        .map(|chunk| chunk[0]..chunk[0] + chunk[1] - 1)
+        .collect::<Vec<_>>();
+
+    seed_ranges
+        .iter()
+        .flat_map(|r| {
+            r.clone()
+                .into_iter()
+                .map(|s| explore_path(s, 0, &almanac))
+                .collect::<Vec<_>>()
+        })
+        .min()
+        .expect("at least one number")
 }
 
 #[cfg(test)]
@@ -136,5 +158,10 @@ humidity-to-location map:
     #[test]
     fn test_part1_sample() {
         assert_eq!(part1(INPUT), 35);
+    }
+
+    #[test]
+    fn test_part2_sample() {
+        assert_eq!(part2(INPUT), 46);
     }
 }
