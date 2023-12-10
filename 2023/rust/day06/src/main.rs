@@ -1,7 +1,10 @@
+use std::time::{Duration, Instant};
+
 fn main() {
     let input = include_str!("../../../input/day_06.txt");
     println!("Part 1: {}", part1(input));
-    println!("Part 2: {}", part2(input));
+    println!("Part 2: {:?}", part2(input));
+    println!("Part 2: {:?} | (Binary Search)", part2_binary_search(input));
 }
 
 fn parse(input: &str) -> Vec<(usize, usize)> {
@@ -34,7 +37,28 @@ fn part1(input: &str) -> usize {
         .product()
 }
 
-fn part2(input: &str) -> usize {
+fn part2(input: &str) -> (usize, Duration) {
+    let start = Instant::now();
+    let (time, distance) = parse(input)
+        .into_iter()
+        .fold((String::new(), String::new()), |acc, x| {
+            (format!("{}{}", acc.0, x.0), format!("{}{}", acc.1, x.1))
+        });
+    let time = time.parse::<usize>().expect("must be number");
+    let distance = distance.parse::<usize>().expect("must be number");
+
+    // Time range is not large enough to slow this linear approach enough to warrant a binary search solution.
+    // This is actually faster than the implementation below...
+    let ans = (1..time)
+        .into_iter()
+        .filter(|&hold_time| travel_distance(hold_time, time) > distance)
+        .count();
+    let duration = start.elapsed();
+    (ans, duration)
+}
+
+fn part2_binary_search(input: &str) -> (usize, Duration) {
+    let start = Instant::now();
     let (time, distance) = parse(input)
         .into_iter()
         .fold((String::new(), String::new()), |acc, x| {
@@ -59,7 +83,8 @@ fn part2(input: &str) -> usize {
         .binary_search_by(|&x| distance.cmp(&travel_distance(x, time)))
         .unwrap_err();
 
-    right - left
+    let duration = start.elapsed();
+    (right - left, duration)
 }
 
 #[cfg(test)]
@@ -76,6 +101,11 @@ Distance:  9  40  200";
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT), 71503);
+        assert_eq!(part2(INPUT).0, 71503);
+    }
+
+    #[test]
+    fn test_part2_binary_search() {
+        assert_eq!(part2_binary_search(INPUT).0, 71503);
     }
 }
