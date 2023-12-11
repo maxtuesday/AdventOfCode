@@ -1,7 +1,7 @@
 use std::{str::Lines, time::Instant};
 
 fn main() {
-    let input = include_str!("../../../input/day_05.txt");
+    let input = include_str!("../../../input/day05.txt");
     println!("Part 1: {}", part1(input));
     println!("Part 2: {}", part2(input));
 }

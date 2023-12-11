@@ -1,7 +1,7 @@
 use std::{cmp::min, collections::HashSet};
 
 fn main() {
-    let input = include_str!("../../../input/day_04.txt");
+    let input = include_str!("../../../input/day04.txt");
     println!("Part 1: {}", part1(input));
     println!("Part 2: {}", part2(input));
 }

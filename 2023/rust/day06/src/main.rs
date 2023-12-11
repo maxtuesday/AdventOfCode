@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 fn main() {
-    let input = include_str!("../../../input/day_06.txt");
+    let input = include_str!("../../../input/day06.txt");
     println!("Part 1: {}", part1(input));
     println!("Part 2: {:?}", part2(input));
     println!("Part 2: {:?} | (Binary Search)", part2_binary_search(input));
