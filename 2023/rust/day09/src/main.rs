@@ -4,7 +4,35 @@ fn main() {
     println!("Part 2: {}", part2(input));
 }
 
-fn part1(input: &str) -> i32 {
+enum Prediction {
+    First,
+    Last,
+}
+
+fn reduce_sequence(seq: Vec<i32>, prediction: &Prediction) -> i32 {
+    // if all nums are 0, we are done
+    if seq.iter().all(|v| *v == 0) {
+        return 0;
+    }
+    let prev = match prediction {
+        Prediction::First => seq.first(),
+        Prediction::Last => seq.last(),
+    }
+    .expect("should not be empty")
+    .clone();
+    // find difference between all nums
+    let diffs = seq
+        .windows(2)
+        .map(|window| window[1] - window[0])
+        .collect::<Vec<_>>();
+    let n = reduce_sequence(diffs, prediction);
+    match prediction {
+        Prediction::First => prev - n,
+        Prediction::Last => prev + n,
+    }
+}
+
+fn process(input: &str, prediction: &Prediction) -> i32 {
     input
         .lines()
         .map(|line| {
@@ -12,50 +40,16 @@ fn part1(input: &str) -> i32 {
                 .filter_map(|num| num.parse::<i32>().ok())
                 .collect::<Vec<_>>()
         })
-        .map(|seq| process(seq.clone()))
+        .map(|seq| reduce_sequence(seq, prediction))
         .sum()
 }
 
-fn process(seq: Vec<i32>) -> i32 {
-    // if all nums are 0, we are done
-    if seq.iter().all(|v| *v == 0) {
-        return 0;
-    }
-    let last = seq.last().expect("should not be empty").clone();
-    // find difference between all nums
-    let diffs = seq
-        .windows(2)
-        .map(|window| window[1] - window[0])
-        .collect::<Vec<_>>();
-    let n = process(diffs);
-    last + n
+fn part1(input: &str) -> i32 {
+    process(input, &Prediction::Last)
 }
 
 fn part2(input: &str) -> i32 {
-    input
-        .lines()
-        .map(|line| {
-            line.split(" ")
-                .filter_map(|num| num.parse::<i32>().ok())
-                .collect::<Vec<_>>()
-        })
-        .map(|seq| process_first(seq.clone()))
-        .sum()
-}
-
-fn process_first(seq: Vec<i32>) -> i32 {
-    // if all nums are 0, we are done
-    if seq.iter().all(|v| *v == 0) {
-        return 0;
-    }
-    let first = seq.first().expect("should not be empty").clone();
-    // find difference between all nums
-    let diffs = seq
-        .windows(2)
-        .map(|window| window[1] - window[0])
-        .collect::<Vec<_>>();
-    let n = process_first(diffs);
-    first - n
+    process(input, &Prediction::First)
 }
 
 #[cfg(test)]
@@ -77,23 +71,23 @@ mod tests {
     }
 
     #[test]
-    fn test_process() {
+    fn test_reduce_sequence_last() {
         let seq = vec![0, 3, 6, 9, 12, 15];
-        assert_eq!(process(seq), 18);
+        assert_eq!(reduce_sequence(seq, &Prediction::Last), 18);
     }
 
     #[test]
-    fn test_process_first() {
+    fn test_reduce_sequence_first() {
         let seq = vec![10, 13, 16, 21, 30, 45];
-        assert_eq!(process_first(seq), 5);
+        assert_eq!(reduce_sequence(seq, &Prediction::First), 5);
     }
 
     #[test]
-    fn test_process_with_negative() {
+    fn test_reduce_sequence_last_with_negative() {
         let seq = vec![
             4, 1, -2, -5, -8, -11, -14, -17, -20, -23, -26, -29, -32, -35, -38, -41, -44, -47, -50,
             -53, -56,
         ];
-        assert_eq!(process(seq), -59);
+        assert_eq!(reduce_sequence(seq, &Prediction::Last), -59);
     }
 }
