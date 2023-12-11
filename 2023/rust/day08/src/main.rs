@@ -3,6 +3,7 @@ use std::collections::HashMap;
 fn main() {
     let input = include_str!("../../../input/day08.txt");
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 #[derive(Debug)]
@@ -65,6 +66,59 @@ fn part1(input: &str) -> usize {
     }
 }
 
+fn steps_to_z(instructions: &Vec<char>, start: String, graph: &HashMap<String, Node>) -> usize {
+    let mut i = 0;
+    let len = instructions.len();
+    let mut cur = start;
+    loop {
+        if cur.ends_with("Z") {
+            return i;
+        }
+
+        let next = graph
+            .get(&cur)
+            .expect("there should be a Node in the graph");
+        match instructions[i % len] {
+            'L' => cur = next.left.clone(),
+            'R' => cur = next.right.clone(),
+            _ => unimplemented!("we do not have any other instructions other than L or R"),
+        }
+        i += 1;
+    }
+}
+
+fn gcd(mut a: usize, mut b: usize) -> usize {
+    // set 'a' as larger value
+    if a < b {
+        let tmp = a;
+        a = b;
+        b = tmp;
+    }
+    while b > 0 {
+        let tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    a
+}
+
+fn lcm(nums: &Vec<usize>) -> usize {
+    nums.iter().fold(1, |lcm, n| lcm * n / gcd(lcm, *n))
+}
+
+fn part2(input: &str) -> usize {
+    let (instructions, graph) = parse(input);
+
+    let steps = graph
+        .keys()
+        .filter(|key| key.ends_with("A"))
+        .map(|node| steps_to_z(&instructions, node.clone(), &graph))
+        .collect::<Vec<_>>();
+
+    // find Least Common Multiple (LCM) of all the steps
+    lcm(&steps)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,5 +145,20 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)";
         assert_eq!(part1(input), 6);
+    }
+
+    #[test]
+    fn test_part2() {
+        let input = "LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)";
+        assert_eq!(part2(input), 6);
     }
 }
