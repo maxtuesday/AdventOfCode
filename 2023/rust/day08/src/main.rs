@@ -8,7 +8,6 @@ fn main() {
 
 #[derive(Debug)]
 struct Node {
-    id: String,
     left: String,
     right: String,
 }
@@ -31,7 +30,6 @@ fn parse(input: &str) -> (Vec<char>, HashMap<String, Node>) {
             let left = left.trim();
             let right = right.trim();
             let node = Node {
-                id: id.clone(),
                 left: String::from(left),
                 right: String::from(right),
             };
@@ -41,37 +39,17 @@ fn parse(input: &str) -> (Vec<char>, HashMap<String, Node>) {
     (instructions, nodes)
 }
 
-fn part1(input: &str) -> usize {
-    let (instructions, graph) = parse(input);
-    // Start at AAA and follow `instructions` until we reach ZZZ
-
-    let target = String::from("ZZZ");
-    let mut i: usize = 0;
-    let len = instructions.len();
-    let mut cur = String::from("AAA");
-    loop {
-        if cur == target {
-            return i;
-        }
-
-        let next = graph
-            .get(&cur)
-            .expect("there should be a Node in the graph");
-        match instructions[i % len] {
-            'L' => cur = next.left.clone(),
-            'R' => cur = next.right.clone(),
-            _ => unimplemented!("we do not have any other instructions other than L or R"),
-        }
-        i += 1;
-    }
-}
-
-fn steps_to_z(instructions: &Vec<char>, start: String, graph: &HashMap<String, Node>) -> usize {
+fn steps_to(
+    instructions: &Vec<char>,
+    graph: &HashMap<String, Node>,
+    start: &str,
+    ends_with: &str,
+) -> usize {
     let mut i = 0;
     let len = instructions.len();
-    let mut cur = start;
+    let mut cur = String::from(start);
     loop {
-        if cur.ends_with("Z") {
+        if cur.ends_with(ends_with) {
             return i;
         }
 
@@ -102,21 +80,20 @@ fn gcd(mut a: usize, mut b: usize) -> usize {
     a
 }
 
-fn lcm(nums: &Vec<usize>) -> usize {
-    nums.iter().fold(1, |lcm, n| lcm * n / gcd(lcm, *n))
+fn part1(input: &str) -> usize {
+    let (instructions, graph) = parse(input);
+    // Start at AAA and follow `instructions` until we reach ZZZ
+    steps_to(&instructions, &graph, "AAA", "ZZZ")
 }
 
 fn part2(input: &str) -> usize {
     let (instructions, graph) = parse(input);
-
-    let steps = graph
+    // find Least Common Multiple (LCM) of all the steps
+    graph
         .keys()
         .filter(|key| key.ends_with("A"))
-        .map(|node| steps_to_z(&instructions, node.clone(), &graph))
-        .collect::<Vec<_>>();
-
-    // find Least Common Multiple (LCM) of all the steps
-    lcm(&steps)
+        .map(|node| steps_to(&instructions, &graph, node, "Z"))
+        .fold(1, |lcm, n| lcm * n / gcd(lcm, n))
 }
 
 #[cfg(test)]
