@@ -1,7 +1,7 @@
 fn main() {
     let input = include_str!("../../../input/day11.txt");
     println!("Part 1: {}", part1(input));
-    println!("Part 2: {}", part2(input, 1000000));
+    println!("Part 2: {}", part2(input));
 }
 
 fn parse(input: &str) -> Vec<Vec<char>> {
@@ -31,26 +31,6 @@ fn get_empty_cols(universe: &Vec<Vec<char>>) -> Vec<usize> {
         }
     }
     empty_cols
-}
-
-// Do not use!
-fn expand(universe: &mut Vec<Vec<char>>, scale: usize) {
-    let empty_rows = get_empty_rows(universe);
-    let empty_cols = get_empty_cols(universe);
-
-    for row in empty_rows.into_iter().rev() {
-        for _ in 1..scale {
-            universe.insert(row, universe[row].clone());
-        }
-    }
-
-    for col in empty_cols.into_iter().rev() {
-        for _ in 1..scale {
-            for row in 0..universe.len() {
-                universe[row].insert(col, '.');
-            }
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -92,51 +72,11 @@ fn distance(a: &Pos, b: &Pos, empty_rows: &Vec<usize>, empty_cols: &Vec<usize>, 
     dy + dx
 }
 
-fn print_universe(universe: &Vec<Vec<char>>) {
-    for r in universe.iter() {
-        for c in r.iter() {
-            print!("{c}");
-        }
-        println!()
-    }
-    println!()
-}
-
-fn part1(input: &str) -> usize {
-    // expand universe
-    // -> add a row where there are no galaxies
-    // -> add a col where there are no galaxies
+fn process(input: &str, scale: usize) -> usize {
     let universe = parse(input);
     let empty_rows = get_empty_rows(&universe);
     let empty_cols = get_empty_cols(&universe);
-    // expand(&mut universe, 2);
-
-    // Find all galaxies
     let galaxies = find_galaxies(&universe);
-    
-    // Find shortest paths between all pairs of galaxies
-    // path distance is rows + cols
-    let mut distances = Vec::new();
-    for i in 0..galaxies.len() {
-        for j in i + 1..galaxies.len() {
-            distances.push(distance(&galaxies[i], &galaxies[j], &empty_rows, &empty_cols, 2));
-        }
-    }
-    distances.iter().sum()
-}
-
-// Actual implementation should be:
-// For each galaxy pair, find how many empty rows and cols there are between their paths
-// Add the expand scale to their distances
-fn part2(input: &str, scale: usize) -> usize {
-    let universe = parse(input);
-    // Find all galaxies
-    let galaxies = find_galaxies(&universe);
-    let empty_rows = get_empty_rows(&universe);
-    let empty_cols = get_empty_cols(&universe);
-
-    // Find shortest paths between all pairs of galaxies
-    // path distance is rows + cols
     let mut distances = Vec::new();
     for i in 0..galaxies.len() {
         for j in i + 1..galaxies.len() {
@@ -144,6 +84,14 @@ fn part2(input: &str, scale: usize) -> usize {
         }
     }
     distances.iter().sum()
+}
+
+fn part1(input: &str) -> usize {
+    process(input, 2)
+}
+
+fn part2(input: &str) -> usize {
+    process(input, 1000000)
 }
 
 #[cfg(test)]
@@ -163,35 +111,16 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(INPUT), 374);
-    }
-
-    #[test]
-    fn test_expand_2x() {
-        let mut input = parse(INPUT);
-        let expected = "....#........
-.........#...
-#............
-.............
-.............
-........#....
-.#...........
-............#
-.............
-.............
-.........#...
-#....#.......";
-        expand(&mut input, 2);
-        assert_eq!(input, parse(expected));
+        assert_eq!(process(INPUT, 2), 374);
     }
 
     #[test]
     fn test_part2_10x() {
-        assert_eq!(part2(INPUT, 10), 1030);
+        assert_eq!(process(INPUT, 10), 1030);
     }
 
     #[test]
     fn test_part2_100x() {
-        assert_eq!(part2(INPUT, 100), 8410);
+        assert_eq!(process(INPUT, 100), 8410);
     }
 }
