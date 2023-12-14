@@ -77,13 +77,13 @@ fn process(input: &str, scale: usize) -> usize {
     let empty_rows = get_empty_rows(&universe);
     let empty_cols = get_empty_cols(&universe);
     let galaxies = find_galaxies(&universe);
-    let mut distances = Vec::new();
+    let mut ans = 0;
     for i in 0..galaxies.len() {
         for j in i + 1..galaxies.len() {
-            distances.push(distance(&galaxies[i], &galaxies[j], &empty_rows, &empty_cols, scale));
+            ans += distance(&galaxies[i], &galaxies[j], &empty_rows, &empty_cols, scale);
         }
     }
-    distances.iter().sum()
+    ans
 }
 
 fn part1(input: &str) -> usize {
