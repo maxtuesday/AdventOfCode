@@ -6,6 +6,25 @@ fn main() {
     println!("Part 2: {}", part2(input));
 }
 
+fn part1(input: &str) -> usize {
+    let mut grid = parse(input);
+    tilt(&mut grid, Direction::North);
+    calculate_load(&grid)
+}
+
+fn part2(input: &str) -> usize {
+    let mut grid = parse(input);
+    // find cycle size and where cycle starts.
+    // Cycle the remaining steps after we take out all the cycles
+    // (1000000000 - (cycle_end_idx + 1)) % cycle_size
+    let (cycle_end_idx, cycle_size) = find_cycle_size(&mut grid);
+    let required_cycles = (1000000000 - (cycle_end_idx + 1)) % cycle_size;
+    for _ in 0..required_cycles {
+        cycle(&mut grid);
+    }
+    calculate_load(&grid)
+}
+
 #[derive(Clone)]
 enum Space {
     RoundRock,
@@ -39,7 +58,7 @@ fn parse(input: &str) -> Grid {
         .collect()
 }
 
-fn dir(r: usize, c: usize, direction: &Direction) -> (usize, usize) {
+fn next_location(r: usize, c: usize, direction: &Direction) -> (usize, usize) {
     match direction {
         Direction::North => (r - 1, c),
         Direction::East => (r, c + 1),
@@ -64,7 +83,7 @@ fn handle_movement(r: usize, c: usize, grid: &mut Grid, direction: &Direction) {
                     break;
                 }
 
-                (rr, cc) = dir(rr, cc, &direction);
+                (rr, cc) = next_location(rr, cc, &direction);
                 match grid[rr][cc] {
                     Space::RoundRock | Space::CubeRock => {
                         // stop
@@ -123,13 +142,6 @@ fn tilt(grid: &mut Grid, direction: Direction) {
     };
 }
 
-fn cycle(grid: &mut Grid) {
-    tilt(grid, Direction::North);
-    tilt(grid, Direction::West);
-    tilt(grid, Direction::South);
-    tilt(grid, Direction::East);
-}
-
 fn calculate_load(grid: &Grid) -> usize {
     grid.iter()
         .enumerate()
@@ -142,7 +154,14 @@ fn calculate_load(grid: &Grid) -> usize {
         .sum()
 }
 
-fn grid_sig(grid: &Grid) -> String {
+fn cycle(grid: &mut Grid) {
+    tilt(grid, Direction::North);
+    tilt(grid, Direction::West);
+    tilt(grid, Direction::South);
+    tilt(grid, Direction::East);
+}
+
+fn grid_signature(grid: &Grid) -> String {
     grid.iter()
         .map(|row| {
             row.iter()
@@ -156,40 +175,16 @@ fn grid_sig(grid: &Grid) -> String {
         .collect::<String>()
 }
 
-fn print_grid(grid: &Grid) {
-    for r in 0..grid.len() {
-        for c in 0..grid[0].len() {
-            let c = match grid[r][c] {
-                Space::RoundRock => "O",
-                Space::CubeRock => "#",
-                Space::Empty => ".",
-            };
-            print!("{c}");
-        }
-        println!()
-    }
-    println!()
-}
-
-fn part1(input: &str) -> usize {
-    let mut grid = parse(input);
-    tilt(&mut grid, Direction::North);
-    calculate_load(&grid)
-}
-
-fn find_cycle_size(mut grid: Grid) -> usize {
-    let mut history = HashMap::new();
+fn find_cycle_size(grid: &mut Grid) -> (usize, usize) {
+    let mut history: HashMap<String, usize> = HashMap::new();
     let mut i = 0;
     loop {
-        cycle(&mut grid);
-        let sig = grid_sig(&grid);
+        cycle(grid);
+        let sig = grid_signature(&grid);
         match history.insert(sig, i) {
             Some(prev) => {
-                // found a cycle
-                // what is the size of the cycle?
                 let cycle_size = i - prev;
-                dbg!(cycle_size);
-                return cycle_size;
+                return (i, cycle_size);
             }
             None => {
                 // do nothing
@@ -197,17 +192,6 @@ fn find_cycle_size(mut grid: Grid) -> usize {
         }
         i += 1;
     }
-}
-
-fn part2(input: &str) -> usize {
-    let mut grid = parse(input);
-    // find cycle size
-    let cycle_size = find_cycle_size(grid.clone());
-    let required_cycles = 1000000000 % cycle_size;
-    for _ in 0..required_cycles {
-        cycle(&mut grid);
-    }
-    calculate_load(&grid)
 }
 
 #[cfg(test)]
