@@ -87,61 +87,42 @@ fn check_smudge_reflection(grid: &Grid, mut l: usize, mut r: usize) -> bool {
     smudges == 1
 }
 
-fn first_perfect_reflection(grid: &Grid) -> Option<usize> {
-    let reflection_indexes = (0..grid.len() - 1)
-        .filter(|&i| check_perfect_reflection(grid, i, i + 1))
-        .collect::<Vec<_>>();
-    // There should be only 0 or 1 indexes found
-    assert!(reflection_indexes.len() <= 1);
-    reflection_indexes.first().copied()
-}
+type CheckFn = fn(&Grid, usize, usize) -> bool;
 
-fn first_smudge_reflection(grid: &Grid) -> Option<usize> {
+fn first_reflection(grid: &Grid, check_fn: CheckFn) -> Option<usize> {
     let reflection_indexes = (0..grid.len() - 1)
-        .filter(|&i| check_smudge_reflection(grid, i, i + 1))
+        .filter(|&i| check_fn(grid, i, i + 1))
         .collect::<Vec<_>>();
     assert!(reflection_indexes.len() <= 1);
     reflection_indexes.first().copied()
 }
 
-fn find_perfect_reflection(grid: &Grid) -> Reflection {
-    if let Some(row) = first_perfect_reflection(grid) {
+fn find_reflection(grid: &Grid, check_fn: CheckFn) -> Reflection {
+    if let Some(row) = first_reflection(grid, check_fn) {
         return Reflection::Row(row + 1);
     }
-    if let Some(col) = first_perfect_reflection(&transpose(grid)) {
+    if let Some(col) = first_reflection(&transpose(grid), check_fn) {
         return Reflection::Col(col + 1);
     }
     unreachable!("did not find a reflection");
 }
 
-fn find_smudge_reflection(grid: &Grid) -> Reflection {
-    if let Some(row) = first_smudge_reflection(grid) {
-        return Reflection::Row(row + 1);
-    }
-    if let Some(col) = first_smudge_reflection(&transpose(grid)) {
-        return Reflection::Col(col + 1);
-    }
-    unreachable!("did not find a reflection");
+fn process(input: &str, check_fn: CheckFn) -> usize {
+    parse(input)
+        .into_iter()
+        .map(|grid| match find_reflection(&grid, check_fn) {
+            Reflection::Row(val) => val * 100,
+            Reflection::Col(val) => val,
+        })
+        .sum()
 }
 
 fn part1(input: &str) -> usize {
-    parse(input)
-        .into_iter()
-        .map(|grid| match find_perfect_reflection(&grid) {
-            Reflection::Row(val) => val * 100,
-            Reflection::Col(val) => val,
-        })
-        .sum()
+    process(input, check_perfect_reflection)
 }
 
-fn part2(input: &str) ->usize {
-    parse(input)
-        .into_iter()
-        .map(|grid| match find_smudge_reflection(&grid) {
-            Reflection::Row(val) => val * 100,
-            Reflection::Col(val) => val,
-        })
-        .sum()
+fn part2(input: &str) -> usize {
+    process(input, check_smudge_reflection)
 }
 
 #[cfg(test)]
