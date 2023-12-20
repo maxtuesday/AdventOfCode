@@ -3,28 +3,21 @@ fn main() {
     println!("Part 1: {}", part1(input));
 }
 
-#[derive(Clone)]
-struct Pattern {
-    grid: Vec<Vec<char>>,
-    reflection_row: usize,
-    reflection_col: usize,
+type Grid = Vec<Vec<char>>;
+
+enum Reflection {
+    Row(usize),
+    Col(usize),
 }
 
-fn parse(input: &str) -> Vec<Pattern> {
+fn parse(input: &str) -> Vec<Grid> {
     input
         .split("\n\n")
-        .map(|pattern| {
-            let grid = pattern.lines().map(|line| line.chars().collect()).collect();
-            Pattern {
-                grid,
-                reflection_row: 0,
-                reflection_col: 0,
-            }
-        })
+        .map(|pattern| pattern.lines().map(|line| line.chars().collect()).collect())
         .collect()
 }
 
-fn transpose(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
+fn transpose(grid: &Grid) -> Grid {
     let mut new_grid = Vec::new();
     for c in 0..grid[0].len() {
         let mut row = Vec::new();
@@ -36,7 +29,7 @@ fn transpose(grid: &Vec<Vec<char>>) -> Vec<Vec<char>> {
     new_grid
 }
 
-fn check_row_reflection(grid: &Vec<Vec<char>>, mut l: usize, mut r: usize) -> bool {
+fn check_reflection(grid: &Grid, mut l: usize, mut r: usize) -> bool {
     loop {
         let left = grid.get(l);
         let right = grid.get(r);
@@ -50,6 +43,7 @@ fn check_row_reflection(grid: &Vec<Vec<char>>, mut l: usize, mut r: usize) -> bo
                 }
             }
         }
+        // will the next iteration make l negative?
         if l == 0 {
             return true;
         }
@@ -58,68 +52,32 @@ fn check_row_reflection(grid: &Vec<Vec<char>>, mut l: usize, mut r: usize) -> bo
     }
 }
 
-fn print_grid(grid: &Vec<Vec<char>>) {
-    for r in 0..grid.len() {
-        for c in 0..grid[r].len() {
-            print!("{}", grid[r][c]);
-        }
-        println!()
-    }
-    println!()
+fn first_reflection(grid: &Grid) -> Option<usize> {
+    let reflection_indexes = (0..grid.len() - 1)
+        .filter(|&i| check_reflection(grid, i, i + 1))
+        .collect::<Vec<_>>();
+    // There should be only 0 or 1 indexes found
+    assert!(reflection_indexes.len() <= 1);
+    reflection_indexes.first().copied()
 }
 
-fn find_reflection(pattern: Pattern) -> Pattern {
-    // print_grid(&pattern.grid);
-    // search rows
-    // use windows(2) and spread out the check until we run out of rows
-
-    // let range = (0..pattern.grid.len() - 1);
-
-    let matching_row_pairs = pattern
-        .grid
-        .windows(2)
-        .enumerate()
-        .filter(|(i, _)| check_row_reflection(&pattern.grid, *i, i + 1))
-        .map(|(i, _)| i)
-        .collect::<Vec<_>>();
-    let reflection_row = if matching_row_pairs.len() > 0 {
-        matching_row_pairs[0] + 1
-    } else {
-        0
-    };
-
-    let transposed_grid = transpose(&pattern.grid);
-    // print_grid(&transposed_grid);
-    let matching_col_pairs = transposed_grid
-        .windows(2)
-        .enumerate()
-        .filter(|(i, _)| check_row_reflection(&transposed_grid, *i, i + 1))
-        .map(|(i, _)| i)
-        .collect::<Vec<_>>();
-    let reflection_col = if matching_col_pairs.len() > 0 {
-        matching_col_pairs[0] + 1
-    } else {
-        0
-    };
-    // if the len of rows is 1, then that is the only spot the reflection can exist
-    // if the len is greater than 1, then we need to
-
-    Pattern {
-        grid: pattern.grid.clone(),
-        reflection_row,
-        reflection_col,
+fn find_reflection(grid: &Grid) -> Reflection {
+    if let Some(row) = first_reflection(grid) {
+        return Reflection::Row(row + 1);
     }
+    if let Some(col) = first_reflection(&transpose(grid)) {
+        return Reflection::Col(col + 1);
+    }
+
+    unreachable!("did not find a reflection");
 }
 
 fn part1(input: &str) -> usize {
-    // Find if pattern is mirrored
-    // Horizontally or Vertically
-
     parse(input)
         .into_iter()
-        .map(|pattern| {
-            let p = find_reflection(pattern);
-            p.reflection_col + (p.reflection_row * 100)
+        .map(|grid| match find_reflection(&grid) {
+            Reflection::Row(val) => val * 100,
+            Reflection::Col(val) => val,
         })
         .sum()
 }
