@@ -3,19 +3,70 @@ use std::{collections::HashSet, fmt::Display, vec};
 fn main() {
     let input = include_str!("../../../input/day16.txt");
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 fn part1(input: &str) -> usize {
     let grid = parse(input);
-    let energized_grid = energize(&grid);
-    energized_grid
-        .iter()
-        .map(|row| {
-            row.iter()
-                .filter(|space| **space == Space::Energized)
-                .count()
-        })
-        .sum()
+    let start_beam = Beam {
+        pos: Pos { r: 0, c: 0 },
+        direction: Direction::Right,
+    };
+    let energized_grid = energize(&grid, start_beam);
+    total_energy(&energized_grid)
+}
+
+fn part2(input: &str) -> usize {
+    let grid = parse(input);
+    // check all the starting locations on the edge
+    // Right
+    let mut max_count = 0;
+    for i in 0..grid.len() {
+        let start_beam = Beam {
+            pos: Pos { r: i, c: 0 },
+            direction: Direction::Right,
+        };
+        let energized_grid = energize(&grid, start_beam);
+        max_count = max_count.max(total_energy(&energized_grid));
+    }
+
+    // Left
+    for i in 0..grid.len() {
+        let start_beam = Beam {
+            pos: Pos {
+                r: i,
+                c: grid[0].len() - 1,
+            },
+            direction: Direction::Left,
+        };
+        let energized_grid = energize(&grid, start_beam);
+        max_count = max_count.max(total_energy(&energized_grid));
+    }
+
+    // Down
+    for i in 0..grid[0].len() {
+        let start_beam = Beam {
+            pos: Pos { r: 0, c: i },
+            direction: Direction::Down,
+        };
+        let energized_grid = energize(&grid, start_beam);
+        max_count = max_count.max(total_energy(&energized_grid));
+    }
+
+    // Up
+    for i in 0..grid[0].len() {
+        let start_beam = Beam {
+            pos: Pos {
+                r: grid.len() - 1,
+                c: i,
+            },
+            direction: Direction::Up,
+        };
+        let energized_grid = energize(&grid, start_beam);
+        max_count = max_count.max(total_energy(&energized_grid));
+    }
+
+    max_count
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -76,15 +127,11 @@ fn parse(input: &str) -> Grid {
         .collect()
 }
 
-fn energize(grid: &Grid) -> Grid {
-    print_grid(grid);
+fn energize(grid: &Grid, start_beam: Beam) -> Grid {
     let mut energized_grid = vec![vec![Space::Empty; grid[0].len()]; grid.len()];
     let mut visited = HashSet::new();
 
-    let mut queue: Vec<Beam> = Vec::from([Beam {
-        pos: Pos { r: 0, c: 0 },
-        direction: Direction::Right,
-    }]);
+    let mut queue: Vec<Beam> = Vec::from([start_beam]);
 
     while queue.len() > 0 {
         let mut next = Vec::new();
@@ -98,12 +145,18 @@ fn energize(grid: &Grid) -> Grid {
             }
         }
         queue = next;
-        // print_grid(&energized_grid);
     }
-
-    print_grid(&energized_grid);
-
     energized_grid
+}
+
+fn total_energy(grid: &Grid) -> usize {
+    grid.iter()
+        .map(|row| {
+            row.iter()
+                .filter(|space| **space == Space::Energized)
+                .count()
+        })
+        .sum()
 }
 
 fn get_dimensions(grid: &Grid) -> (usize, usize) {
@@ -193,16 +246,6 @@ fn next_beams(beam: &Beam, grid: &Grid) -> Vec<Beam> {
     next.into_iter().filter_map(|b| b).collect()
 }
 
-fn print_grid(grid: &Grid) {
-    for r in 0..grid.len() {
-        for c in 0..grid[0].len() {
-            print!("{}", grid[r][c]);
-        }
-        println!();
-    }
-    println!();
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,5 +264,10 @@ mod tests {
     #[test]
     fn test_part1_ex() {
         assert_eq!(part1(INPUT), 46);
+    }
+
+    #[test]
+    fn test_part2_ex() {
+        assert_eq!(part2(INPUT), 51);
     }
 }
