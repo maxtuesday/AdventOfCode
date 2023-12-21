@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt::Display, vec};
+use std::{collections::HashSet, fmt::Display};
 
 fn main() {
     let input = include_str!("../../../input/day16.txt");
@@ -130,21 +130,16 @@ fn parse(input: &str) -> Grid {
 fn energize(grid: &Grid, start_beam: Beam) -> Grid {
     let mut energized_grid = vec![vec![Space::Empty; grid[0].len()]; grid.len()];
     let mut visited = HashSet::new();
-
     let mut queue: Vec<Beam> = Vec::from([start_beam]);
 
-    while queue.len() > 0 {
-        let mut next = Vec::new();
-        for beam in queue.iter() {
-            energized_grid[beam.pos.r][beam.pos.c] = Space::Energized;
-            visited.insert(beam.clone());
-            for next_beam in next_beams(beam, grid) {
-                if !visited.contains(&next_beam) {
-                    next.push(next_beam);
-                }
+    while let Some(beam) = queue.pop() {
+        energized_grid[beam.pos.r][beam.pos.c] = Space::Energized;
+        visited.insert(beam.clone());
+        for next_beam in next_beams(&beam, grid) {
+            if !visited.contains(&next_beam) {
+                queue.push(next_beam);
             }
         }
-        queue = next;
     }
     energized_grid
 }
