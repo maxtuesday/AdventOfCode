@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 fn main() {
     let input = include_str!("../../../input/day15.txt");
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 fn part1(input: &str) -> u32 {
@@ -13,6 +16,73 @@ fn hash(input: &str) -> u32 {
         .fold(0, |acc, c| ((acc + c as u32) * 17) % 256)
 }
 
+#[derive(Debug)]
+struct Lens {
+    id: String,
+    focal_length: u32,
+}
+
+fn part2(input: &str) -> u32 {
+    let mut boxes: HashMap<u32, Vec<Lens>> = HashMap::new();
+    input.split(",").for_each(|word| {
+        // dbg!(word);
+        if let Some((id, focal_length)) = word.split_once("=") {
+            let key = hash(id);
+            let focal_length = focal_length
+                .parse::<u32>()
+                .expect("focal length should be a valid digit");
+            boxes
+                .entry(key)
+                .and_modify(|v| {
+                    // search for lens
+                    match v.iter().position(|lens| lens.id == id) {
+                        Some(i) => {
+                            v[i] = Lens {
+                                id: id.to_string(),
+                                focal_length,
+                            };
+                        }
+                        None => {
+                            v.push(Lens {
+                                id: id.to_string(),
+                                focal_length,
+                            });
+                        }
+                    }
+                })
+                .or_insert(vec![Lens {
+                    id: id.to_string(),
+                    focal_length,
+                }]);
+        } else if let Some((id, _)) = word.split_once("-") {
+            let key = hash(id);
+            boxes.entry(key).and_modify(|v| {
+                match v.iter().position(|lens| lens.id == id) {
+                    Some(i) => {
+                        v.remove(i);
+                    }
+                    None => {}
+                };
+            });
+        } else {
+            unimplemented!("invalid syntax: {word}");
+        }
+
+        // dbg!(&boxes);
+    });
+
+    boxes
+        .iter()
+        .map(|(box_number, lenses)| {
+            lenses
+                .iter()
+                .enumerate()
+                .map(|(i, lens)| (box_number + 1) * (i as u32 + 1) * lens.focal_length)
+                .sum::<u32>()
+        })
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -22,6 +92,11 @@ mod tests {
     #[test]
     fn test_part1_ex() {
         assert_eq!(part1(INPUT), 1320);
+    }
+
+    #[test]
+    fn test_part2_ex() {
+        assert_eq!(part2(INPUT), 145);
     }
 
     #[test]
