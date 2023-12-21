@@ -16,16 +16,28 @@ fn hash(input: &str) -> u32 {
         .fold(0, |acc, c| ((acc + c as u32) * 17) % 256)
 }
 
+fn part2(input: &str) -> u32 {
+    hashmap(input)
+        .iter()
+        .map(|(box_number, lenses)| {
+            lenses
+                .iter()
+                .enumerate()
+                .map(|(i, lens)| (box_number + 1) * (i as u32 + 1) * lens.focal_length)
+                .sum::<u32>()
+        })
+        .sum()
+}
+
 #[derive(Debug)]
 struct Lens {
     id: String,
     focal_length: u32,
 }
 
-fn part2(input: &str) -> u32 {
+fn hashmap(input: &str) -> HashMap<u32, Vec<Lens>> {
     let mut boxes: HashMap<u32, Vec<Lens>> = HashMap::new();
     input.split(",").for_each(|word| {
-        // dbg!(word);
         if let Some((id, focal_length)) = word.split_once("=") {
             let key = hash(id);
             let focal_length = focal_length
@@ -37,10 +49,7 @@ fn part2(input: &str) -> u32 {
                     // search for lens
                     match v.iter().position(|lens| lens.id == id) {
                         Some(i) => {
-                            v[i] = Lens {
-                                id: id.to_string(),
-                                focal_length,
-                            };
+                            v[i].focal_length = focal_length;
                         }
                         None => {
                             v.push(Lens {
@@ -67,20 +76,8 @@ fn part2(input: &str) -> u32 {
         } else {
             unimplemented!("invalid syntax: {word}");
         }
-
-        // dbg!(&boxes);
     });
-
     boxes
-        .iter()
-        .map(|(box_number, lenses)| {
-            lenses
-                .iter()
-                .enumerate()
-                .map(|(i, lens)| (box_number + 1) * (i as u32 + 1) * lens.focal_length)
-                .sum::<u32>()
-        })
-        .sum()
 }
 
 #[cfg(test)]
