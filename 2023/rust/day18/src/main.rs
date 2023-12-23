@@ -9,27 +9,23 @@ fn part1(input: &str) -> usize {
     let digs = parse(input);
     let dimensions = get_dimensions(&digs);
     dbg!(&dimensions);
-    let mut grid = create_grid(&dimensions);
+    // let mut grid = create_grid(&dimensions);
     // print_grid(&grid);
 
     // dig
-    let mut visited = dig(&mut grid, &dimensions, &digs);
-    let dig_wall = visited.clone();
-    let inside = flood_fill(
-        Pos {
-            r: grid.len() / 2,
-            c: grid[0].len() / 2,
-        },
-        &grid,
-        &mut visited,
-    );
+    let mut visited = dig(&dimensions, &digs);
+    // let dig_wall = visited.clone();
+    let w = (dimensions.w_right + dimensions.w_left.abs()) as usize + 1;
+    let h = (dimensions.h_up + dimensions.h_down.abs()) as usize + 1;
+    // vec![vec!['.'; w + 1]; h + 1]
+    flood_fill(Pos { r: h / 2, c: w / 2 }, w, h, &mut visited);
 
-    if inside {
-        fill_visited('x', &mut grid, &visited);
-    }
-    fill_visited('#', &mut grid, &dig_wall);
+    // if inside {
+    //     fill_visited('x', &mut grid, &visited);
+    // }
+    // fill_visited('#', &mut grid, &dig_wall);
 
-    print_grid(&grid);
+    // print_grid(&grid);
 
     visited.len()
 }
@@ -124,13 +120,13 @@ fn get_dimensions(digs: &Vec<Dig>) -> Dimensions {
     dimensions
 }
 
-fn create_grid(dimensions: &Dimensions) -> Grid {
-    let w = (dimensions.w_right + dimensions.w_left.abs()) as usize;
-    let h = (dimensions.h_up + dimensions.h_down.abs()) as usize;
-    vec![vec!['.'; w + 1]; h + 1]
-}
+// fn create_grid(dimensions: &Dimensions) -> Grid {
+//     let w = (dimensions.w_right + dimensions.w_left.abs()) as usize;
+//     let h = (dimensions.h_up + dimensions.h_down.abs()) as usize;
+//     vec![vec!['.'; w + 1]; h + 1]
+// }
 
-fn dig(grid: &mut Grid, dimensions: &Dimensions, digs: &Vec<Dig>) -> HashSet<Pos> {
+fn dig(dimensions: &Dimensions, digs: &Vec<Dig>) -> HashSet<Pos> {
     let mut r = dimensions.h_up;
     let mut c = -dimensions.w_left;
     assert!(c >= 0);
@@ -147,16 +143,14 @@ fn dig(grid: &mut Grid, dimensions: &Dimensions, digs: &Vec<Dig>) -> HashSet<Pos
             };
             let r = r as usize;
             let c = c as usize;
-            grid[r][c] = '#';
+            // grid[r][c] = '#';
             visited.insert(Pos { r, c });
-            // print_grid(grid);
         }
-        // print_grid(grid);
     }
     visited
 }
 
-fn get_next_position(direction: Direction, pos: &Pos, grid: &Grid) -> Option<Pos> {
+fn get_next_position(direction: Direction, pos: &Pos, w: usize, h: usize) -> Option<Pos> {
     match direction {
         Direction::Up => {
             let Some(r) = pos.r.checked_sub(1) else {
@@ -167,7 +161,7 @@ fn get_next_position(direction: Direction, pos: &Pos, grid: &Grid) -> Option<Pos
         }
         Direction::Down => {
             let r = pos.r + 1;
-            if r >= grid.len() {
+            if r >= h {
                 println!("R OOB POS: {:?}", pos);
                 return None;
             }
@@ -182,7 +176,7 @@ fn get_next_position(direction: Direction, pos: &Pos, grid: &Grid) -> Option<Pos
         }
         Direction::Right => {
             let c = pos.c + 1;
-            if c >= grid[0].len() {
+            if c >= w {
                 println!("C OOB POS: {:?}", pos);
                 return None;
             }
@@ -191,57 +185,52 @@ fn get_next_position(direction: Direction, pos: &Pos, grid: &Grid) -> Option<Pos
     }
 }
 
-fn get_neighbors(pos: &Pos, grid: &Grid, visited: &HashSet<Pos>) -> (Vec<Pos>, bool) {
+fn get_neighbors(pos: &Pos, w: usize, h: usize, visited: &HashSet<Pos>) -> Vec<Pos> {
     let neighbors = vec![
-        get_next_position(Direction::Up, pos, grid),
-        get_next_position(Direction::Down, pos, grid),
-        get_next_position(Direction::Left, pos, grid),
-        get_next_position(Direction::Right, pos, grid),
+        get_next_position(Direction::Up, pos, w, h),
+        get_next_position(Direction::Down, pos, w, h),
+        get_next_position(Direction::Left, pos, w, h),
+        get_next_position(Direction::Right, pos, w, h),
     ];
 
-    let stayed_in_bounds = neighbors.len() == 4;
-    let neighbors = neighbors
+    neighbors
         .into_iter()
         .filter_map(|pos| pos)
-        .filter(|pos| !visited.contains(pos) && grid[pos.r][pos.c] != '#')
-        .collect();
-    (neighbors, stayed_in_bounds)
+        .filter(|pos| !visited.contains(pos))
+        .collect()
 }
 
-fn flood_fill(start: Pos, grid: &Grid, visited: &mut HashSet<Pos>) -> bool {
-    let mut inside = true;
-
+fn flood_fill(start: Pos, w: usize, h: usize, visited: &mut HashSet<Pos>) {
     let mut queue = vec![start];
 
     while let Some(pos) = queue.pop() {
         // get neighbors
-        let (neighbors, is_inside) = get_neighbors(&pos, grid, visited);
-        if !is_inside {
-            inside = false;
-        }
+        let neighbors = get_neighbors(&pos, w, h, visited);
+        // if !is_inside {
+        //     inside = false;
+        // }
         for nei in neighbors {
             visited.insert(nei.clone());
             queue.push(nei);
         }
     }
-    inside
 }
 
-fn fill_visited(fill: char, grid: &mut Grid, visited: &HashSet<Pos>) {
-    for pos in visited {
-        grid[pos.r][pos.c] = fill;
-    }
-}
+// fn fill_visited(fill: char, grid: &mut Grid, visited: &HashSet<Pos>) {
+//     for pos in visited {
+//         grid[pos.r][pos.c] = fill;
+//     }
+// }
 
-fn print_grid(grid: &Grid) {
-    for r in 0..grid.len() {
-        for c in 0..grid[0].len() {
-            print!("{}", grid[r][c]);
-        }
-        println!();
-    }
-    println!();
-}
+// fn print_grid(grid: &Grid) {
+//     for r in 0..grid.len() {
+//         for c in 0..grid[0].len() {
+//             print!("{}", grid[r][c]);
+//         }
+//         println!();
+//     }
+//     println!();
+// }
 
 #[cfg(test)]
 mod tests {
