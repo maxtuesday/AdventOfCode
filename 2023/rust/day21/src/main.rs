@@ -3,6 +3,7 @@ use std::collections::HashSet;
 fn main() {
     let input = include_str!("../../../input/day21.txt");
     println!("Part 1: {}", part1(input));
+    // println!("Part 2: {}", part2(input));
 }
 
 type Grid = Vec<Vec<char>>;
@@ -31,10 +32,6 @@ fn get_start(grid: &Grid) -> Pos {
     unreachable!("did not find starting location");
 }
 
-fn is_in_bounds(pos: &Pos, grid: &Grid) -> bool {
-    0 <= pos.x && pos.x < grid.len() as i32 && 0 <= pos.y && pos.y < grid[0].len() as i32
-}
-
 fn get_successors(pos: &Pos, grid: &Grid, visited: &HashSet<Pos>) -> Vec<Pos> {
     vec![
         Pos {
@@ -55,9 +52,7 @@ fn get_successors(pos: &Pos, grid: &Grid, visited: &HashSet<Pos>) -> Vec<Pos> {
         },
     ]
     .into_iter()
-    .filter(|p| {
-        is_in_bounds(p, grid) && grid[p.x as usize][p.y as usize] != '#' && !visited.contains(p)
-    })
+    .filter(|p| get_location(grid, p) != '#' && !visited.contains(p))
     .collect()
 }
 
@@ -98,13 +93,48 @@ fn part1(input: &str) -> usize {
     count_plots(&grid, 64)
 }
 
+/*
+How do we translate to the "parallel" plots?
+When we go out of bounds, we need to probably modulo the index...
+
+  a  b  c
+  d  e  f
+  g  h  i
+
+We start at 'e'
+'a' if x and y are neg
+'b' if x is pos and y is neg
+'c' if x is pos and over grid[0].len() and y is neg
+
+'d' if x is neg and y is pos
+'f' if x is pos and over grid[0].len() and y is pos
+
+'g' if x is neg and y is over grid.len()
+'h' if x is pos and y is over grid.len()
+'i' if x is over grid[0].len() and y is over grid.len()
+
+*/
+
+fn get_location(grid: &Grid, pos: &Pos) -> char {
+    let x_max = grid[0].len() as i32;
+    let y_max = grid.len() as i32;
+    let x = pos.x % x_max;
+    let x = if x < 0 { x_max + x } else { x };
+    let y = pos.y % y_max;
+    let y = if y < 0 { y_max + y } else { y };
+    grid[x as usize][y as usize]
+}
+
+fn part2(input: &str) -> usize {
+    let grid = parse(input);
+    count_plots(&grid, 26501365)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_count_plots_ex() {
-        let input = "...........
+    const INPUT: &str = "...........
 .....###.#.
 .###.##..#.
 ..#.#...#..
@@ -116,7 +146,51 @@ mod tests {
 .##..##.##.
 ...........";
 
-        let grid = parse(input);
+    #[test]
+    fn test_count_plots_ex() {
+        let grid = parse(INPUT);
         assert_eq!(count_plots(&grid, 6), 16);
     }
+
+    #[test]
+    fn test_count_plots_part2_ex1() {
+        let grid = parse(INPUT);
+        assert_eq!(count_plots(&grid, 6), 16);
+    }
+
+    #[test]
+    fn test_count_plots_ex2() {
+        let grid = parse(INPUT);
+        assert_eq!(count_plots(&grid, 10), 50);
+    }
+
+    #[test]
+    fn test_count_plots_ex3() {
+        let grid = parse(INPUT);
+        assert_eq!(count_plots(&grid, 50), 1594);
+    }
+
+    // #[test]
+    // fn test_count_plots_ex4() {
+    //     let grid = parse(INPUT);
+    //     assert_eq!(count_plots(&grid, 100), 6536);
+    // }
+
+    // #[test]
+    // fn test_count_plots_ex5() {
+    //     let grid = parse(INPUT);
+    //     assert_eq!(count_plots(&grid, 500), 167004);
+    // }
+
+    // #[test]
+    // fn test_count_plots_ex6() {
+    //     let grid = parse(INPUT);
+    //     assert_eq!(count_plots(&grid, 1000), 668697);
+    // }
+
+    // #[test]
+    // fn test_count_plots_ex7() {
+    //     let grid = parse(INPUT);
+    //     assert_eq!(count_plots(&grid, 5000), 16733044);
+    // }
 }
