@@ -3,6 +3,7 @@ use std::collections::HashMap;
 fn main() {
     let input = include_str!("../../../input/day23.txt");
     println!("Part 1: {}", part1(input));
+    println!("Part 2: {}", part2(input));
 }
 
 type Grid = Vec<Vec<char>>;
@@ -133,6 +134,25 @@ fn part1(input: &str) -> u32 {
     dfs(&start, &goal, &grid, &mut visited)
 }
 
+fn part2(input: &str) -> u32 {
+    let mut grid = parse(input);
+    for i in 0..grid.len() {
+        for j in 0..grid[0].len() {
+            match grid[i][j] {
+                '>' | '<' | '^' | 'v' => {
+                    grid[i][j] = '.';
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let start = get_start(&grid);
+    let goal = get_goal(&grid);
+    let mut visited = HashMap::new();
+    dfs(&start, &goal, &grid, &mut visited)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -164,5 +184,10 @@ mod tests {
     #[test]
     fn test_part1_ex() {
         assert_eq!(part1(INPUT), 94);
+    }
+
+    #[test]
+    fn test_part2_ex() {
+        assert_eq!(part2(INPUT), 154);
     }
 }
