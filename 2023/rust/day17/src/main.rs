@@ -3,6 +3,7 @@ use std::collections::{BinaryHeap, HashSet};
 fn main() {
     let input = include_str!("../../../input/day17.txt");
     println!("Part 1: {}", part1(input));
+    println!("Part 1: {}", part2(input));
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -102,7 +103,13 @@ impl Graph {
         Some(Pos { x, y })
     }
 
-    fn next_step(&self, state: &State, direction: Direction) -> Option<Step> {
+    fn next_step(
+        &self,
+        state: &State,
+        direction: Direction,
+        min_steps: u8,
+        max_steps: u8,
+    ) -> Option<Step> {
         let Some(pos) = self.next_pos(&state.step.pos, &direction) else {
             return None;
         };
@@ -111,26 +118,29 @@ impl Graph {
         } else {
             state.step.steps + 1
         };
+        if state.step.steps < min_steps && state.step.direction != direction {
+            return None;
+        }
         let next = Step {
             pos,
             direction,
             steps,
         };
-        if next.steps > 3 {
+        if next.steps > max_steps {
             return None;
         }
         Some(next)
     }
 
-    fn successors(&self, state: &State) -> Vec<Step> {
+    fn successors(&self, state: &State, min_steps: u8, max_steps: u8) -> Vec<Step> {
         next_directions(&state.step.direction)
             .into_iter()
-            .filter_map(|dir| self.next_step(&state, dir))
+            .filter_map(|dir| self.next_step(&state, dir, min_steps, max_steps))
             .collect()
     }
 }
 
-fn get_min_heatloss(graph: &Graph) -> Option<u32> {
+fn get_min_heatloss(graph: &Graph, min_steps: u8, max_steps: u8) -> Option<u32> {
     let start_right = State {
         step: Step {
             pos: Pos { x: 1, y: 0 },
@@ -162,10 +172,13 @@ fn get_min_heatloss(graph: &Graph) -> Option<u32> {
 
     while let Some(state) = heap.pop() {
         if state.step.pos == goal {
+            if state.step.steps < min_steps {
+                continue
+            }
             return Some(state.cost);
         }
 
-        for next_step in graph.successors(&state) {
+        for next_step in graph.successors(&state, min_steps, max_steps) {
             let cost = graph.grid[next_step.pos.y][next_step.pos.x] + state.cost;
 
             if !visited.contains(&next_step) {
@@ -182,7 +195,12 @@ fn get_min_heatloss(graph: &Graph) -> Option<u32> {
 
 fn part1(input: &str) -> u32 {
     let graph = Graph::from(input);
-    get_min_heatloss(&graph).expect("did not find goal")
+    get_min_heatloss(&graph, 1, 3).expect("goal was found")
+}
+
+fn part2(input: &str) -> u32 {
+    let graph = Graph::from(input);
+    get_min_heatloss(&graph, 4, 10).expect("goal was found")
 }
 
 #[cfg(test)]
@@ -206,5 +224,20 @@ mod tests {
     #[test]
     fn test_part1_ex() {
         assert_eq!(part1(INPUT), 102);
+    }
+
+    #[test]
+    fn test_part2_ex1() {
+        assert_eq!(part2(INPUT), 94);
+    }
+
+    #[test]
+    fn test_part2_ex2() {
+        let input = "111111111111
+999999999991
+999999999991
+999999999991
+999999999991";
+        assert_eq!(part2(input), 71);
     }
 }
