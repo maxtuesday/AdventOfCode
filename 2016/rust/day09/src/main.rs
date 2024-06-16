@@ -8,74 +8,53 @@ fn main() {
 
 fn part1(input: &str) -> usize {
     let mut chars = input.chars();
-    decompress(&mut chars)
+    decompress_len(&mut chars, false)
 }
 
 fn part2(input: &str) -> usize {
     let mut chars = input.chars();
-    decompress_v2(&mut chars)
+    decompress_len(&mut chars, true)
 }
 
-fn decompress(chars: &mut Chars) -> usize {
-    while let Some(char) = chars.next() {
-        match char {
-            '(' => {
-                // take until find 'x'
-                let seq_len = chars
-                    .take_while(|c| *c != 'x')
-                    .collect::<String>()
-                    .parse::<usize>()
-                    .expect("tried to parse marker length");
+fn parse_marker(chars: &mut Chars) -> (usize, usize) {
+    let seq_len = chars
+        .take_while(|c| *c != 'x')
+        .collect::<String>()
+        .parse::<usize>()
+        .expect("tried to parse marker length");
 
-                let repeat = chars
-                    .take_while(|c| *c != ')')
-                    .collect::<String>()
-                    .parse::<usize>()
-                    .expect("tried to parse marker repeat times");
-
-                // take for seq_len
-                for _ in 0..seq_len {
-                    chars.next();
-                }
-                return seq_len * repeat + decompress(chars)
-            }
-            _ => {
-                // len += 1;
-                return 1 + decompress(chars)
-            }
-        }
-    }
-    0
+    let repeat = chars
+        .take_while(|c| *c != ')')
+        .collect::<String>()
+        .parse::<usize>()
+        .expect("tried to parse marker repeat times");
+    
+    (seq_len, repeat)
 }
 
-fn decompress_v2(chars: &mut Chars) -> usize {
+fn decompress_len(chars: &mut Chars, full: bool) -> usize {
     while let Some(c) = chars.next() {
         match c {
             '(' => {
-                // take until find 'x'
-                let seq_len = chars
-                    .take_while(|c| *c != 'x')
-                    .collect::<String>()
-                    .parse::<usize>()
-                    .expect("tried to parse marker length");
+                let (seq_len, repeat) = parse_marker(chars);
 
-                let repeat = chars
-                    .take_while(|c| *c != ')')
-                    .collect::<String>()
-                    .parse::<usize>()
-                    .expect("tried to parse marker repeat times");
+                let seq_len_add = if full {
+                    let sequence = chars.clone().take(seq_len).collect::<String>();
+                    let mut seq_chars = sequence.chars();
+                    decompress_len(&mut seq_chars, full)
+                } else {
+                    seq_len
+                };
 
-                let sequence = chars.clone().take(seq_len).collect::<String>();
                 for _ in 0..seq_len {
                     chars.next();
                 }
-                let mut seq_chars = sequence.chars();
-                let sequence_len = decompress_v2(&mut seq_chars);
-                return sequence_len * repeat + decompress_v2(chars);
+                
+                return seq_len_add * repeat + decompress_len(chars, full);
             }
             _ => {
                 // single character
-                return 1 + decompress_v2(chars);
+                return 1 + decompress_len(chars, full);
             }
         }
     }
