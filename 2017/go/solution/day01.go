@@ -27,5 +27,14 @@ func (d Day01) Part1(input string) string {
 }
 
 func (d Day01) Part2(input string) string {
-	return ""
+	sum := 0
+	step := len(input) / 2
+	for i := 0; i < step; i++ {
+		current := input[i]
+		next := input[i+step]
+		if current == next {
+			sum += int(current - '0')
+		}
+	}
+	return fmt.Sprintf("%d", sum*2)
 }
