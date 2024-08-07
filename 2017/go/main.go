@@ -38,7 +38,7 @@ func main() {
 
 	solutions := []Solution{
 		solution.Day01{},
-		solution.Day01{},
+		solution.Day02{},
 	}
 
 	if day < 1 || day > len(solutions) {
