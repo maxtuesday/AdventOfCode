@@ -94,13 +94,6 @@ func (d Day03) Part1(input string) string {
 	return fmt.Sprintf("%d", distance)
 }
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
 func (d Day03) Part2(input string) string {
 	// Simulate spiral?
 	target, err := strconv.Atoi(input)
