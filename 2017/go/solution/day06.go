@@ -58,14 +58,26 @@ func (d Day06) Part1(input string) string {
 		key := redistribute(blocks)
 		steps++
 		if _, ok := seen[key]; ok {
-			break
+			return fmt.Sprintf("%d", steps)
 		}
 		seen[key] = struct{}{}
 	}
-
-	return fmt.Sprintf("%d", steps)
 }
 
 func (d Day06) Part2(input string) string {
-	return ""
+	blocks := d.parse(input)
+
+	seen := map[string]int{}
+	seen[fmt.Sprintf("%v", blocks)] = 0
+
+	steps := 0
+
+	for {
+		key := redistribute(blocks)
+		steps++
+		if v, ok := seen[key]; ok {
+			return fmt.Sprintf("%d", steps-v)
+		}
+		seen[key] = steps
+	}
 }
