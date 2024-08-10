@@ -9,7 +9,7 @@ import (
 type Day05 struct {
 }
 
-func parse(input string) []int {
+func (d Day05) parse(input string) []int {
 	tokens := strings.Split(input, "\n")
 	jumps := make([]int, len(tokens))
 	for i := range tokens {
@@ -23,7 +23,7 @@ func parse(input string) []int {
 }
 
 func (d Day05) Part1(input string) string {
-	jumps := parse(input)
+	jumps := d.parse(input)
 
 	// simulate jumps
 	idx := 0
@@ -40,7 +40,7 @@ func (d Day05) Part1(input string) string {
 }
 
 func (d Day05) Part2(input string) string {
-	jumps := parse(input)
+	jumps := d.parse(input)
 
 	// simulate jumps
 	idx := 0
