@@ -46,6 +46,7 @@ func main() {
 		solution.Day07{},
 		solution.Day08{},
 		solution.Day09{},
+		solution.Day10{},
 	}
 
 	if day < 1 || day > len(solutions) {
