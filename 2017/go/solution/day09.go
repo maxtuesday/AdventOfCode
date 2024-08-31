@@ -11,53 +11,65 @@ type Stream struct {
 }
 
 // '{' starts a group when we are not in garbage
-// '}' starts a group when we are not in garbage
+// '}' ends a group when we are not in garbage
+// '<' starts garbage
+// '>' end garbage
 // '!' skips the next character
-func (s *Stream) process() int {
+func (s *Stream) process() (int, int) {
 	score := 0
+	removedGarbage := 0
 	for s.index < len(s.stream) {
 		switch s.stream[s.index] {
 		case '{':
-			score += s.handleGroup(1)
+			s, r := s.handleGroup(1)
+			score += s
+			removedGarbage += r
 		case '<':
-			s.handleGarbage()
+			removedGarbage += s.handleGarbage()
 		case '!':
 			s.index += 2
 		default:
 			s.index++
 		}
 	}
-	return score
+	return score, removedGarbage
 }
 
-func (s *Stream) handleGroup(depth int) int {
+func (s *Stream) handleGroup(depth int) (int, int) {
 	score := 0
+	removedGarbage := 0
 	for s.index < len(s.stream) {
 		s.index++
 		switch s.stream[s.index] {
 		case '{':
-			score += s.handleGroup(depth + 1)
+			s, r := s.handleGroup(depth + 1)
+			score += s
+			removedGarbage += r
 		case '}':
-			return score + depth
+			return score + depth, removedGarbage
 		case '<':
-			s.handleGarbage()
+			removedGarbage += s.handleGarbage()
 		case '!':
 			s.index++
 		}
 	}
-	return score + depth
+	panic("unreachable")
 }
 
-func (s *Stream) handleGarbage() {
+func (s *Stream) handleGarbage() int {
+	chars := 0
 	for s.index < len(s.stream) {
 		s.index++
 		switch s.stream[s.index] {
 		case '>':
-			return
+			return chars
 		case '!':
 			s.index++
+		default:
+			chars++
 		}
 	}
+	panic("unreachable")
 }
 
 func (d Day09) Part1(input string) string {
@@ -65,10 +77,15 @@ func (d Day09) Part1(input string) string {
 		stream: input,
 		index:  0,
 	}
-	groups := s.process()
-	return fmt.Sprintf("%d", groups)
+	score, _ := s.process()
+	return fmt.Sprintf("%d", score)
 }
 
 func (d Day09) Part2(input string) string {
-	return ""
+	s := &Stream{
+		stream: input,
+		index:  0,
+	}
+	_, removedGarbage := s.process()
+	return fmt.Sprintf("%d", removedGarbage)
 }
