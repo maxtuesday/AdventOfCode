@@ -19,6 +19,24 @@ func (d Day10) reverse(arr []int, i, j int) {
 	}
 }
 
+func (d Day10) hash(size int, lengths []int, rounds int) []int {
+	list := make([]int, size)
+	for i := range list {
+		list[i] = i
+	}
+
+	index, skip := 0, 0
+	for i := 0; i < rounds; i++ {
+		for _, length := range lengths {
+			d.reverse(list, index, index+length-1)
+			index += length + skip
+			skip++
+		}
+	}
+
+	return list
+}
+
 func (d Day10) Part1(input string) string {
 	lengthStrs := strings.Fields(strings.ReplaceAll(input, ",", " "))
 	lengths := make([]int, len(lengthStrs))
@@ -31,20 +49,8 @@ func (d Day10) Part1(input string) string {
 		size = d.sizeOverride
 	}
 
-	list := make([]int, size)
-	for i := range list {
-		list[i] = i
-	}
+	list := d.hash(size, lengths, 1)
 
-	index := 0
-	skip := 0
-	for _, length := range lengths {
-		d.reverse(list, index, index+length-1)
-		index += length + skip
-		skip++
-	}
-
-	// multiply the first two numbers
 	return fmt.Sprintf("%d", list[0]*list[1])
 }
 
@@ -56,35 +62,17 @@ func (d Day10) Part2(input string) string {
 	}
 	lengths = append(lengths, []int{17, 31, 73, 47, 23}...)
 
-	list := make([]int, 256)
-	for i := range list {
-		list[i] = i
-	}
+	list := d.hash(256, lengths, 64)
 
-	index := 0
-	skip := 0
-	for i := 0; i < 64; i++ {
-		for _, length := range lengths {
-			d.reverse(list, index, index+length-1)
-			index += length + skip
-			skip++
-		}
-	}
-
-	blocks := []int{}
+	hex := ""
 	for i := 0; i < 16; i++ {
-		// XOR elements
 		offset := i * 16
-		result := list[offset]
+		block := list[offset]
 		for j := 1; j < 16; j++ {
-			result ^= list[j+offset]
+			block ^= list[j+offset]
 		}
-		blocks = append(blocks, result)
+		hex += fmt.Sprintf("%02x", block)
 	}
 
-	result := ""
-	for _, block := range blocks {
-		result += fmt.Sprintf("%02x", block)
-	}
-	return result
+	return hex
 }
