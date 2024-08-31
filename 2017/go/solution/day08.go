@@ -100,10 +100,11 @@ func (d Day08) parse(input string) []Instruction {
 	return instructions
 }
 
-func (d Day08) Part1(input string) string {
+func (d Day08) process(input string) (int, int) {
 	instructions := d.parse(input)
 	registers := map[string]int{}
 
+	maxAtAnyPoint := 0
 	for _, instruction := range instructions {
 		if instruction.condition.eval(registers) {
 			switch instruction.operation {
@@ -112,20 +113,30 @@ func (d Day08) Part1(input string) string {
 			case Dec:
 				registers[instruction.register] -= instruction.amount
 			}
+
+			if registers[instruction.register] > maxAtAnyPoint {
+				maxAtAnyPoint = registers[instruction.register]
+			}
 		}
 	}
 
 	// find max register value
-	max := math.MinInt
+	maxAtEnd := math.MinInt
 	for _, v := range registers {
-		if v > max {
-			max = v
+		if v > maxAtEnd {
+			maxAtEnd = v
 		}
 	}
 
+	return maxAtEnd, maxAtAnyPoint
+}
+
+func (d Day08) Part1(input string) string {
+	max, _ := d.process(input)
 	return fmt.Sprintf("%d", max)
 }
 
 func (d Day08) Part2(input string) string {
-	return ""
+	_, max := d.process(input)
+	return fmt.Sprintf("%d", max)
 }
