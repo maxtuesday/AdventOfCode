@@ -10,7 +10,7 @@ type Day10 struct {
 	sizeOverride int
 }
 
-func reverse(arr []int, i, j int) {
+func (d Day10) reverse(arr []int, i, j int) {
 	size := len(arr)
 	for i < j {
 		arr[i%size], arr[j%size] = arr[j%size], arr[i%size]
@@ -39,7 +39,7 @@ func (d Day10) Part1(input string) string {
 	index := 0
 	skip := 0
 	for _, length := range lengths {
-		reverse(list, index, index+length-1)
+		d.reverse(list, index, index+length-1)
 		index += length + skip
 		skip++
 	}
@@ -49,5 +49,42 @@ func (d Day10) Part1(input string) string {
 }
 
 func (d Day10) Part2(input string) string {
-	return ""
+	// convert characters into ASCII lengths
+	lengths := []int{}
+	for i := range input {
+		lengths = append(lengths, int(input[i]))
+	}
+	lengths = append(lengths, []int{17, 31, 73, 47, 23}...)
+
+	list := make([]int, 256)
+	for i := range list {
+		list[i] = i
+	}
+
+	index := 0
+	skip := 0
+	for i := 0; i < 64; i++ {
+		for _, length := range lengths {
+			d.reverse(list, index, index+length-1)
+			index += length + skip
+			skip++
+		}
+	}
+
+	blocks := []int{}
+	for i := 0; i < 16; i++ {
+		// XOR elements
+		offset := i * 16
+		result := list[offset]
+		for j := 1; j < 16; j++ {
+			result ^= list[j+offset]
+		}
+		blocks = append(blocks, result)
+	}
+
+	result := ""
+	for _, block := range blocks {
+		result += fmt.Sprintf("%02x", block)
+	}
+	return result
 }
