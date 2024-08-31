@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 use std::collections::{BinaryHeap, HashSet};
 
 fn main() {
@@ -7,6 +8,18 @@ fn main() {
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+=======
+fn main() {
+    let input = include_str!("../../../input/day17.txt");
+    println!("Part 1: {}", part1(input));
+}
+
+fn part1(input: &str) -> u32 {
+    0
+}
+
+#[derive(Clone)]
+>>>>>>> Stashed changes
 enum Direction {
     Up,
     Down,
@@ -14,6 +27,7 @@ enum Direction {
     Right,
 }
 
+<<<<<<< Updated upstream
 fn next_directions(direction: &Direction) -> Vec<Direction> {
     match direction {
         Direction::Up | Direction::Down => {
@@ -201,6 +215,95 @@ fn part1(input: &str) -> u32 {
 fn part2(input: &str) -> u32 {
     let graph = Graph::from(input);
     get_min_heatloss(&graph, 4, 10).expect("goal was found")
+=======
+#[derive(Clone)]
+struct Pos {
+    x: i32,
+    y: i32,
+    direction: Direction,
+    steps_until_turn: u32,
+}
+
+impl Pos {
+    fn next(&self) -> Pos {
+        let mut p = self.clone();
+        match self.direction {
+            Direction::Up => p.y -= 1,
+            Direction::Down => p.y += 1,
+            Direction::Left => p.x -= 1,
+            Direction::Right => p.x += 1,
+        }
+        p.steps_until_turn -= 1;
+        p
+    }
+
+    fn is_in_bounds(&self, graph: &Graph) -> bool {
+        0 <= self.y && self.y < graph.len() as i32 && 0 <= self.x && self.x < graph[0].len() as i32
+    }
+
+    fn successors(&self, graph: &Graph) -> Vec<(Pos, u32)> {
+        // How should we find the successors of the current position.
+        // Rule: we must turn after moving 3 spaces in the same direction
+
+        // Can we keep track of the direction this position was traveling and how many steps it has gone in that direction?
+
+        if self.steps_until_turn > 0 {
+            // we have three choices.
+            // - continue in the same direction,
+            // - turn 90 degrees
+            let mut turns = match self.direction {
+                Direction::Up | Direction::Down => {
+                    vec![
+                        Pos {
+                            x: self.x - 1,
+                            y: self.y,
+                            direction: Direction::Left,
+                            steps_until_turn: self.steps_until_turn - 1,
+                        },
+                        Pos {
+                            x: self.x + 1,
+                            y: self.y,
+                            direction: Direction::Right,
+                            steps_until_turn: self.steps_until_turn - 1,
+                        },
+                    ]
+                }
+                Direction::Left | Direction::Right => {
+                    vec![
+                        Pos {
+                            x: self.x,
+                            y: self.y - 1,
+                            direction: Direction::Up,
+                            steps_until_turn: self.steps_until_turn - 1,
+                        },
+                        Pos {
+                            x: self.x,
+                            y: self.y + 1,
+                            direction: Direction::Down,
+                            steps_until_turn: self.steps_until_turn - 1,
+                        },
+                    ]
+                }
+            };
+            let same_direction = self.next();
+            turns.push(same_direction);
+
+            // filter out positions that may be oob
+            let next = turns
+                .iter()
+                .filter(|pos| pos.is_in_bounds(graph))
+                .map(|pos| (pos, graph[pos.y as usize][pos.x as usize]))
+                .collect::<Vec<_>>();
+        }
+        todo!()
+    }
+}
+
+type Graph = Vec<Vec<i32>>;
+
+fn dijkstra(start: Pos, goal: Pos, graph: &Graph) -> u32 {
+    0
+>>>>>>> Stashed changes
 }
 
 #[cfg(test)]
@@ -225,6 +328,7 @@ mod tests {
     fn test_part1_ex() {
         assert_eq!(part1(INPUT), 102);
     }
+<<<<<<< Updated upstream
 
     #[test]
     fn test_part2_ex1() {
@@ -240,4 +344,6 @@ mod tests {
 999999999991";
         assert_eq!(part2(input), 71);
     }
+=======
+>>>>>>> Stashed changes
 }

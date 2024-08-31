@@ -78,7 +78,9 @@ fn get_start(pos: &Pos, graph: &Vec<Vec<char>>) -> Vec<Pos> {
 fn print_graph(graph: &Vec<Vec<char>>, visited: &HashSet<Pos>) {
     for (r, row) in graph.iter().enumerate() {
         for (c, ch) in row.iter().enumerate() {
-            if visited.contains(&Pos(r as i32, c as i32)) {
+            if ch == &'.' {
+                print!("\u{1b}[1m\u{1b}[31m{ch}\u{1b}[0m");
+            } else if visited.contains(&Pos(r as i32, c as i32)) {
                 print!("\u{1b}[1m\u{1b}[32m{ch}\u{1b}[0m");
             } else {
                 print!("{ch}");
@@ -101,9 +103,6 @@ fn part1(input: &str) -> usize {
     let start = find_start(&graph);
     let mut visited: HashSet<Pos> = HashSet::from([start]);
     let mut queue = get_start(&start, &graph);
-    queue.iter().for_each(|q| {
-        visited.insert(q.clone());
-    });
     let mut steps = 0;
 
     while queue.len() > 0 {
@@ -122,6 +121,12 @@ fn part1(input: &str) -> usize {
     }
     print_graph(&graph, &visited);
     steps
+}
+
+fn part2(input: &str) -> usize {
+    // We need to figure out how many '.'s are within the loop...
+    // Can we do a DFS and check which '.'s are on the "right hand" side of the loop?
+    0
 }
 
 #[cfg(test)]
