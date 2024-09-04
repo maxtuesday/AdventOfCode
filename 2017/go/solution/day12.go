@@ -34,7 +34,7 @@ func (d Day12) dedup(arr []int) []int {
 	return next
 }
 
-func (d Day12) Part1(input string) string {
+func (d Day12) parse(input string) map[int][]int {
 	adj := map[int][]int{}
 
 	lines := strings.Split(input, "\n")
@@ -65,6 +65,12 @@ func (d Day12) Part1(input string) string {
 		adj[k] = d.dedup(v)
 	}
 
+	return adj
+}
+
+func (d Day12) Part1(input string) string {
+	adj := d.parse(input)
+
 	total := 0
 	visited := map[int]bool{}
 	d.dfs(0, adj, visited, &total)
@@ -73,5 +79,19 @@ func (d Day12) Part1(input string) string {
 }
 
 func (d Day12) Part2(input string) string {
-	return ""
+	adj := d.parse(input)
+
+	N := len(adj)
+	visited := map[int]bool{}
+
+	groups := 0
+	for i := 0; i < N; i++ {
+		total := 0
+		d.dfs(i, adj, visited, &total)
+		if total > 0 {
+			groups++
+		}
+	}
+
+	return fmt.Sprintf("%d", groups)
 }
