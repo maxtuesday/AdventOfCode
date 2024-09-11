@@ -30,17 +30,11 @@ func (l *Layer) Severity() int {
 }
 
 type Firewall struct {
-	layers map[int]*Layer
+	layers    map[int]*Layer
+	maxLayers int
 }
 
-func (f *Firewall) Step() {
-	for _, v := range f.layers {
-		v.Step()
-	}
-}
-
-func (d Day13) Part1(input string) string {
-	// layer: depth
+func NewFirewall(input string) *Firewall {
 	lines := strings.Split(input, "\n")
 
 	layers := map[int]*Layer{}
@@ -58,26 +52,51 @@ func (d Day13) Part1(input string) string {
 		maxLayers = max(maxLayers, d)
 	}
 
-	firewall := &Firewall{
-		layers: layers,
+	return &Firewall{
+		layers:    layers,
+		maxLayers: maxLayers,
 	}
+}
 
-	// simulate
+func (f *Firewall) Step() {
+	for _, v := range f.layers {
+		v.Step()
+	}
+}
+
+func (f *Firewall) Severity() (int, bool) {
 	severity := 0
-	for i := 0; i <= maxLayers; i++ {
+	caught := false
+	for i := 0; i <= f.maxLayers; i++ {
 		// check if pos is same space as scanner
-		if l, ok := firewall.layers[i]; ok && l.scannerPos == 0 {
+		if l, ok := f.layers[i]; ok && l.scannerPos == 0 {
 			// caught
-			severity += firewall.layers[i].Severity()
+			caught = true
+			severity += f.layers[i].Severity()
 		}
 
 		// move
-		firewall.Step()
+		f.Step()
 	}
+	return severity, caught
+}
 
-	return fmt.Sprintf("%d", severity)
+func (d Day13) Part1(input string) string {
+	firewall := NewFirewall(input)
+	sev, _ := firewall.Severity()
+	return fmt.Sprintf("%d", sev)
 }
 
 func (d Day13) Part2(input string) string {
-	return ""
+	delay := 0
+	for {
+		firewall := NewFirewall(input)
+		for i := 0; i < delay; i++ {
+			firewall.Step()
+		}
+		if _, caught := firewall.Severity(); !caught {
+			return fmt.Sprintf("%d", delay)
+		}
+		delay++
+	}
 }
