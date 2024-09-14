@@ -88,6 +88,8 @@ func (d Day13) Part1(input string) string {
 }
 
 func (d Day13) Part2(input string) string {
+	return ""
+
 	delay := 0
 	for {
 		firewall := NewFirewall(input)
