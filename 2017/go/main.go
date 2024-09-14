@@ -45,14 +45,19 @@ func Solve(day int) {
 	sol := solutions[day-1]
 
 	now := time.Now()
-	fmt.Printf("Part 1: %-15s%s\n", sol.Part1(input), time.Since(now))
+	p1 := sol.Part1(input)
+	fmt.Printf("[%10s] Part 1: %s\n", time.Since(now).Round(time.Microsecond), p1)
 	now = time.Now()
-	fmt.Printf("Part 2: %-15s%s\n", sol.Part2(input), time.Since(now))
+	p2 := sol.Part2(input)
+	fmt.Printf("[%10s] Part 2: %s\n", time.Since(now).Round(time.Microsecond), p2)
 }
 
 func main() {
 	if len(os.Args) < 2 {
-		panic("require day as argument (number)")
+		for i := range solutions {
+			Solve(i + 1)
+		}
+		return
 	}
 
 	dayStr := os.Args[1]
