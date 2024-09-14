@@ -5,11 +5,30 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Solution interface {
 	Part1(input string) string
 	Part2(input string) string
+}
+
+var solutions = []Solution{
+	solution.Day01{},
+	solution.Day02{},
+	solution.Day03{},
+	solution.Day04{},
+	solution.Day05{},
+	solution.Day06{},
+	solution.Day07{},
+	solution.Day08{},
+	solution.Day09{},
+	solution.Day10{},
+	solution.Day11{},
+	solution.Day12{},
+	solution.Day13{},
+	solution.Day14{},
+	solution.Day15{},
 }
 
 func readInput(day int) string {
@@ -20,9 +39,15 @@ func readInput(day int) string {
 	return string(content)
 }
 
-func Solve(sol Solution, input string) {
-	fmt.Printf("Part 1: %s\n", sol.Part1(input))
-	fmt.Printf("Part 2: %s\n", sol.Part2(input))
+func Solve(day int) {
+	fmt.Printf("Day %02d:\n", day)
+	input := readInput(day)
+	sol := solutions[day-1]
+
+	now := time.Now()
+	fmt.Printf("Part 1: %-15s%s\n", sol.Part1(input), time.Since(now))
+	now = time.Now()
+	fmt.Printf("Part 2: %-15s%s\n", sol.Part2(input), time.Since(now))
 }
 
 func main() {
@@ -36,27 +61,9 @@ func main() {
 		panic(err)
 	}
 
-	solutions := []Solution{
-		solution.Day01{},
-		solution.Day02{},
-		solution.Day03{},
-		solution.Day04{},
-		solution.Day05{},
-		solution.Day06{},
-		solution.Day07{},
-		solution.Day08{},
-		solution.Day09{},
-		solution.Day10{},
-		solution.Day11{},
-		solution.Day12{},
-		solution.Day13{},
-		solution.Day14{},
-		solution.Day15{},
-	}
-
 	if day < 1 || day > len(solutions) {
 		panic("day is out-of-bounds")
 	}
 
-	Solve(solutions[day-1], readInput(day))
+	Solve(day)
 }
