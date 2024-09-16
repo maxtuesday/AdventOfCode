@@ -10,95 +10,51 @@ type Day13 struct {
 }
 
 type Layer struct {
-	depth            int
-	scannerRange     int
-	scannerPos       int
-	scannerDirection int
+	Depth int
+	Range int
 }
 
-func (l *Layer) Step() {
-	if l.scannerPos == 0 {
-		l.scannerDirection = 1
-	} else if l.scannerPos == l.scannerRange-1 {
-		l.scannerDirection = -1
-	}
-	l.scannerPos += l.scannerDirection
-}
-
-func (l *Layer) Severity() int {
-	return l.depth * l.scannerRange
-}
-
-type Firewall struct {
-	layers    map[int]*Layer
-	maxLayers int
-}
-
-func NewFirewall(input string) *Firewall {
+func (d Day13) Parse(input string) []Layer {
 	lines := strings.Split(input, "\n")
 
-	layers := map[int]*Layer{}
-	maxLayers := 0
-	for _, line := range lines {
-		tokens := strings.Split(line, ":")
-		d, _ := strconv.Atoi(strings.TrimSpace(tokens[0]))
-		r, _ := strconv.Atoi(strings.TrimSpace(tokens[1]))
-
-		layers[d] = &Layer{
-			depth:            d,
-			scannerRange:     r,
-			scannerDirection: 1,
+	layers := make([]Layer, len(lines))
+	for i := range lines {
+		tokens := strings.Split(lines[i], ": ")
+		d, err := strconv.Atoi(tokens[0])
+		if err != nil {
+			panic(err)
 		}
-		maxLayers = max(maxLayers, d)
-	}
-
-	return &Firewall{
-		layers:    layers,
-		maxLayers: maxLayers,
-	}
-}
-
-func (f *Firewall) Step() {
-	for _, v := range f.layers {
-		v.Step()
-	}
-}
-
-func (f *Firewall) Severity() (int, bool) {
-	severity := 0
-	caught := false
-	for i := 0; i <= f.maxLayers; i++ {
-		// check if pos is same space as scanner
-		if l, ok := f.layers[i]; ok && l.scannerPos == 0 {
-			// caught
-			caught = true
-			severity += f.layers[i].Severity()
+		r, err := strconv.Atoi(tokens[1])
+		if err != nil {
+			panic(err)
 		}
 
-		// move
-		f.Step()
+		layers[i] = Layer{
+			Depth: d,
+			Range: r,
+		}
 	}
-	return severity, caught
+
+	return layers
+}
+
+func (d Day13) Caught(time, rangeLen int) bool {
+	return time%((rangeLen-1)*2) == 0
 }
 
 func (d Day13) Part1(input string) string {
-	firewall := NewFirewall(input)
-	sev, _ := firewall.Severity()
-	return fmt.Sprintf("%d", sev)
+	layers := d.Parse(input)
+
+	severity := 0
+	for _, layer := range layers {
+		if d.Caught(layer.Depth, layer.Range) {
+			severity += layer.Depth * layer.Range
+		}
+	}
+
+	return fmt.Sprintf("%d", severity)
 }
 
 func (d Day13) Part2(input string) string {
 	return ""
-
-	delay := 0
-	for {
-		firewall := NewFirewall(input)
-		for i := 0; i < delay; i++ {
-			firewall.Step()
-		}
-		if _, caught := firewall.Severity(); !caught {
-			return fmt.Sprintf("%d", delay)
-		}
-		delay++
-	}
 }
