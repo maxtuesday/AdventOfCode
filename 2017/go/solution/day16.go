@@ -19,15 +19,8 @@ func (d Day16) SearchChar(b []byte, needle byte) int {
 	panic(fmt.Sprintf("needle not found: %c", needle))
 }
 
-func (d Day16) Part1(input string) string {
-	p := "abcdefghijklmnop"
-	if d.overrideProgram != "" {
-		p = d.overrideProgram
-	}
-
+func (d Day16) Dance(p string, instructions []string) string {
 	programs := []byte(p)
-
-	instructions := strings.Split(input, ",")
 	for _, instruction := range instructions {
 		switch {
 		case strings.HasPrefix(instruction, "s"):
@@ -55,10 +48,45 @@ func (d Day16) Part1(input string) string {
 			panic(fmt.Sprintf("unknown instruction: %s", instruction))
 		}
 	}
-
 	return string(programs)
 }
 
+func (d Day16) Part1(input string) string {
+	p := "abcdefghijklmnop"
+	if d.overrideProgram != "" {
+		p = d.overrideProgram
+	}
+	instructions := strings.Split(input, ",")
+	return d.Dance(p, instructions)
+}
+
+func (d Day16) CycleLength(p string, instructions []string) int {
+	seen := map[string]struct{}{}
+
+	i := 0
+	for {
+		p = d.Dance(p, instructions)
+		if _, ok := seen[p]; !ok {
+			seen[p] = struct{}{}
+		} else {
+			return i
+		}
+		i++
+	}
+}
+
 func (d Day16) Part2(input string) string {
-	return ""
+	p := "abcdefghijklmnop"
+	instructions := strings.Split(input, ",")
+
+	// find cycle length
+	cycleLength := d.CycleLength(p, instructions)
+
+	// we would like to dance 1_000_000_000 times.
+	remainder := 1_000_000_000 % cycleLength
+	for i := 0; i < remainder; i++ {
+		p = d.Dance(p, instructions)
+	}
+
+	return p
 }
