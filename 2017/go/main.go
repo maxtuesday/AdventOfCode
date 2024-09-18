@@ -29,6 +29,7 @@ var solutions = []Solution{
 	solution.Day13{},
 	solution.Day14{},
 	solution.Day15{},
+	solution.Day16{},
 }
 
 func readInput(day int) string {
