@@ -20,19 +20,6 @@ func (d Day19) parse(input string) [][]string {
 	return diagram
 }
 
-func printDiagram(diagram [][]string, visited map[Pos]bool) {
-	for i := range diagram {
-		for j := range diagram[i] {
-			if visited[Pos{r: i, c: j}] {
-				fmt.Printf("\033[1;32m%s\033[0m", diagram[i][j])
-			} else {
-				fmt.Printf("%s", diagram[i][j])
-			}
-		}
-		fmt.Println()
-	}
-}
-
 type Pos struct {
 	r int
 	c int
@@ -56,15 +43,13 @@ func isLetter(a string) bool {
 	return r.MatchString(a)
 }
 
-func (d Day19) Part1(input string) string {
-	diagram := d.parse(input)
-
+func (d Day19) traverse(diagram [][]string) ([]string, int) {
 	// find starting location on first line
 	p := findStartingPosition(diagram)
 	dir := "south"
 
-	visited := map[Pos]bool{}
 	letters := []string{}
+	steps := 0
 	for {
 		// navigate until we find a +, then change direction
 		// if we come across a letter, then we should collect it
@@ -74,14 +59,13 @@ func (d Day19) Part1(input string) string {
 			break
 		}
 
-		visited[p] = true
-
 		token := diagram[p.r][p.c]
 		if token == " " {
 			// reached end of diagram path
 			break
 		}
 
+		steps++
 		if isLetter(token) {
 			// letter
 			letters = append(letters, token)
@@ -126,10 +110,17 @@ func (d Day19) Part1(input string) string {
 			p.c--
 		}
 	}
+	return letters, steps
+}
 
+func (d Day19) Part1(input string) string {
+	diagram := d.parse(input)
+	letters, _ := d.traverse(diagram)
 	return strings.Join(letters, "")
 }
 
 func (d Day19) Part2(input string) string {
-	return ""
+	diagram := d.parse(input)
+	_, steps := d.traverse(diagram)
+	return fmt.Sprintf("%d", steps)
 }
