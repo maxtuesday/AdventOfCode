@@ -10,24 +10,24 @@ import (
 type Day20 struct {
 }
 
-type Coords struct {
+type Coord struct {
 	x, y, z int
 }
 
 type Particle struct {
-	pos Coords
-	vel Coords
-	acc Coords
+	pos Coord
+	vel Coord
+	acc Coord
 }
 
-func parseCoords(component string) Coords {
+func parseCoords(component string) Coord {
 	tokens := strings.Split(component[3:len(component)-1], ",")
 	nums := []int{}
 	for _, token := range tokens {
 		n, _ := strconv.Atoi(strings.TrimSpace(token))
 		nums = append(nums, n)
 	}
-	return Coords{
+	return Coord{
 		x: nums[0],
 		y: nums[1],
 		z: nums[2],
@@ -84,13 +84,34 @@ func (d Day20) findClosest(particles []Particle) int {
 func (d Day20) Part1(input string) string {
 	particles := d.parse(input)
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 500; i++ {
 		d.updateParticles(particles)
 	}
 
 	return fmt.Sprintf("%d", d.findClosest(particles))
 }
 
+func (d Day20) removeCollisions(particles []Particle) []Particle {
+	positions := map[Coord][]Particle{}
+	for _, p := range particles {
+		positions[p.pos] = append(positions[p.pos], p)
+	}
+	p := []Particle{}
+	for _, v := range positions {
+		if len(v) == 1 {
+			p = append(p, v[0])
+		}
+	}
+	return p
+}
+
 func (d Day20) Part2(input string) string {
-	return ""
+	particles := d.parse(input)
+
+	for i := 0; i < 50; i++ {
+		d.updateParticles(particles)
+		particles = d.removeCollisions(particles)
+	}
+
+	return fmt.Sprintf("%d", len(particles))
 }
