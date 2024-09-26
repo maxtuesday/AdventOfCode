@@ -28,10 +28,6 @@ func FromString(pattern string) Pattern {
 	p := make([][]byte, len(rows))
 	for r := range rows {
 		p[r] = append([]byte{}, rows[r]...)
-		// p[r] = make([]byte, len(rows[r]))
-		// for c := range rows[r] {
-		// 	p[r][c] = rows[r][c]
-		// }
 	}
 	return NewPattern(p)
 }
@@ -174,7 +170,6 @@ func (d Day21) Merge(patterns []Pattern) Pattern {
 	for r := 0; r < size; r++ {
 		for c := 0; c < size; c++ {
 			// initialize quadrant top left corner (r, c)
-
 			for i := 0; i < chunkSize; i++ {
 				for j := 0; j < chunkSize; j++ {
 					foo := pp[r][c].pattern[i][j]
