@@ -241,5 +241,12 @@ func (d Day21) Part1(input string) string {
 }
 
 func (d Day21) Part2(input string) string {
-	return ""
+	rules := d.parse(input)
+
+	p := NewPattern(start)
+	for i := 0; i < 18; i++ {
+		p = d.process(p, rules)
+	}
+
+	return fmt.Sprintf("%d", p.CountOn())
 }
