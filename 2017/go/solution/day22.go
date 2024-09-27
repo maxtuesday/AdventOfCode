@@ -17,6 +17,18 @@ type Node struct {
 	infected bool
 }
 
+const (
+	Clean    = 0
+	Weakened = 1
+	Infected = 2
+	Flagged  = 3
+)
+
+type NodePart2 struct {
+	pos   Position
+	state int
+}
+
 type Direction [2]int
 
 var (
@@ -120,6 +132,79 @@ func (d Day22) step(vc *VirusCarrier, nodes map[Position]*Node) {
 	vc.MoveForward()
 }
 
+func (d Day22) parsePart2(input string) map[Position]*NodePart2 {
+	lines := strings.Split(input, "\n")
+	if len(lines)%2 == 0 || len(lines[0])%2 == 0 {
+		panic("there is no center location")
+	}
+
+	nodes := map[Position]*NodePart2{}
+
+	centerY := len(lines) / 2
+	centerX := len(lines[0]) / 2
+	for y, line := range lines {
+		for x := range line {
+			pos := Position{
+				x: x - centerX,
+				y: centerY - y,
+			}
+			state := Clean
+			if line[x] == '#' {
+				state = Infected
+			}
+			nodes[pos] = &NodePart2{
+				pos:   pos,
+				state: state,
+			}
+		}
+	}
+
+	return nodes
+}
+
+func (d Day22) stepPart2(vc *VirusCarrier, nodes map[Position]*NodePart2) {
+	var node *NodePart2
+	if n, ok := nodes[vc.pos]; ok {
+		node = n
+	} else {
+		node = &NodePart2{
+			pos:   vc.pos,
+			state: Clean,
+		}
+		nodes[vc.pos] = node
+	}
+
+	// Movement:
+	// - Clean    -> Left
+	// - Weakened -> No turn
+	// - Infected -> Right
+	// - Flagged  -> Reverse
+
+	// Node update:
+	// - Clean    -> Weakened
+	// - Weakened -> Infected
+	// - Infected -> Flagged
+	// - Flagged  -> Clean
+
+	switch node.state {
+	case Clean:
+		node.state = Weakened
+		vc.Turn(LEFT)
+	case Weakened:
+		node.state = Infected
+		vc.infectionCount++
+	case Infected:
+		node.state = Flagged
+		vc.Turn(RIGHT)
+	case Flagged:
+		node.state = Clean
+		vc.Turn(RIGHT)
+		vc.Turn(RIGHT)
+	}
+
+	vc.MoveForward()
+}
+
 func (d Day22) DisplayGrid(vc *VirusCarrier, nodes map[Position]*Node) {
 	for y := 4; y >= -4; y-- {
 		for x := -4; x <= 4; x++ {
@@ -127,6 +212,34 @@ func (d Day22) DisplayGrid(vc *VirusCarrier, nodes map[Position]*Node) {
 			state := "."
 			if node, ok := nodes[pos]; ok && node.infected {
 				state = "#"
+			}
+
+			if vc.pos == pos {
+				fmt.Printf("[%s]", state)
+			} else {
+				fmt.Printf(" %s ", state)
+			}
+		}
+		fmt.Println()
+	}
+	fmt.Println()
+}
+
+func (d Day22) DisplayGridPart2(vc *VirusCarrier, nodes map[Position]*NodePart2) {
+	for y := 4; y >= -4; y-- {
+		for x := -4; x <= 4; x++ {
+			pos := Position{x, y}
+			state := "."
+			if node, ok := nodes[pos]; ok {
+				switch node.state {
+				case Clean:
+				case Weakened:
+					state = "W"
+				case Infected:
+					state = "#"
+				case Flagged:
+					state = "F"
+				}
 			}
 
 			if vc.pos == pos {
@@ -155,5 +268,15 @@ func (d Day22) Part1(input string) string {
 }
 
 func (d Day22) Part2(input string) string {
-	return ""
+	nodes := d.parsePart2(input)
+	vc := &VirusCarrier{
+		pos:       Position{0, 0},
+		direction: UP,
+	}
+
+	for i := 0; i < 10_000_000; i++ {
+		d.stepPart2(vc, nodes)
+	}
+
+	return fmt.Sprintf("%d", vc.infectionCount)
 }
