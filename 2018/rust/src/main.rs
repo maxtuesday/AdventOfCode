@@ -4,6 +4,7 @@ use solution::Solution;
 
 mod solution;
 mod day01;
+mod day02;
 
 fn day_entry(day: usize, sol: impl Solution + 'static) -> (usize, Box<dyn Solution>) {
     (day, Box::new(sol))
@@ -19,6 +20,7 @@ fn main() {
 
     let solutions: HashMap<usize, Box<dyn Solution>> = HashMap::from([
         day_entry(1, day01::Day01{}),
+        day_entry(2, day02::Day02{}),
     ]);
 
     let solution = solutions.get(&day).expect("solution for {day} not defined");
