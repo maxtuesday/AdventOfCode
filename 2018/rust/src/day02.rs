@@ -32,6 +32,27 @@ impl CandidateBox {
     }
 }
 
+fn single_char_diff(a: &str, b: &str) -> Option<usize> {
+    assert!(a.len() == b.len());
+
+    let a = a.to_string();
+    let b = b.to_string();
+
+    let mut diffs = 0;
+    let mut first_diff_idx = 0;
+    for i in 0..a.len() {
+        if a.as_bytes()[i] != b.as_bytes()[i] {
+            diffs+=1;
+            if diffs == 1 {
+                first_diff_idx = i;
+            } else {
+                return None
+            }
+        }
+    }
+    Some(first_diff_idx)
+}
+
 impl Solution for Day02 {
     fn part1(&self, input: &str) -> String {
         let boxes = input.lines().map(CandidateBox::from).collect::<Vec<_>>();
@@ -42,6 +63,18 @@ impl Solution for Day02 {
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let boxes = input.lines().collect::<Vec<_>>();
+
+        for i in 0..boxes.len() {
+            for j in i+1..boxes.len() {
+                if let Some(idx) = single_char_diff(boxes[i], boxes[j]) {
+                    let s = boxes[i];
+                    let left = &s[..idx];
+                    let right = &s[idx+1..];
+                    return format!("{left}{right}")
+                }
+            }
+        }
+        unimplemented!()
     }
 }
