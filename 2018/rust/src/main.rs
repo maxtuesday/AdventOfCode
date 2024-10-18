@@ -4,6 +4,7 @@ use solution::Solution;
 
 mod day01;
 mod day02;
+mod day03;
 mod solution;
 
 type SolutionSet = HashMap<usize, Box<dyn Solution>>;
@@ -39,8 +40,11 @@ fn main() {
         Day::Day(val.parse::<usize>().expect("expected a positive integer"))
     });
 
-    let solutions: SolutionSet =
-        HashMap::from([day_entry(1, day01::Day01 {}), day_entry(2, day02::Day02 {})]);
+    let solutions: SolutionSet = HashMap::from([
+        day_entry(1, day01::Day01 {}),
+        day_entry(2, day02::Day02 {}),
+        day_entry(3, day03::Day03 {}),
+    ]);
 
     match day {
         Day::Day(i) => exec_solution(i, &solutions),
