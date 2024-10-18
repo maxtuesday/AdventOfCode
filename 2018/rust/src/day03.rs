@@ -133,7 +133,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_process_claims() {
+    fn test_count_overlapping_squares() {
         let claims = r"#1 @ 1,3: 4x4
 #2 @ 3,1: 4x4
 #3 @ 5,5: 2x2";
@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[test]
-    fn test_process_claims_2() {
+    fn test_find_non_overlapping_claim() {
         let claims = r"#1 @ 1,3: 4x4
 #2 @ 3,1: 4x4
 #3 @ 5,5: 2x2";
