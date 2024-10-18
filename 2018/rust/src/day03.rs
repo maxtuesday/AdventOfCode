@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use crate::solution::Solution;
 
@@ -55,22 +55,7 @@ fn parse(input: &str) -> Vec<Claim> {
     input.lines().map(Claim::from).collect::<Vec<_>>()
 }
 
-fn dump_grid(grid: &Vec<Vec<usize>>) {
-    for r in 0..grid.len() {
-        for c in 0..grid[r].len() {
-            let count = grid[r][c];
-            if count == 0 {
-                print!(".")
-            } else {
-                print!("{count}");
-            }
-        }
-        println!();
-    }
-    println!();
-}
-
-fn process_claims(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
+fn count_overlapping_squares(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
     let mut grid = vec![vec![0; grid_size.0]; grid_size.1];
 
     for claim in claims {
@@ -95,8 +80,9 @@ fn process_claims(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
     count
 }
 
-fn process_claims_2(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
-    let mut grid: HashMap<Pos, Vec<usize>> = HashMap::new();
+fn find_non_overlapping_claim(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
+    let mut grid = vec![vec![0; grid_size.0]; grid_size.1];
+    let mut overlapping: HashSet<usize> = HashSet::new();
 
     for claim in claims {
         let id = claim.id;
@@ -104,29 +90,25 @@ fn process_claims_2(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
         let x = claim.origin.x;
         for r in y..y + claim.height {
             for c in x..x + claim.width {
-                grid.entry(Pos { x: c, y: r })
-                    .and_modify(|v| v.push(id))
-                    .or_insert(vec![id]);
+                if grid[r][c] == 0 {
+                    // We have not seen this square before.
+                    // Assign square with `id`.
+                    grid[r][c] = id;
+                } else {
+                    // We have seen this square.
+                    // Add this claim.id and grid value
+                    overlapping.insert(id);
+                    overlapping.insert(grid[r][c]);
+                }
             }
         }
     }
 
-    // let mut overlapping_claims = HashSet::new();
-    let overlapping_claims = grid
-        .iter()
-        .flat_map(|(_, claims)| {
-            if claims.len() > 1 {
-                claims.clone()
-            } else {
-                vec![]
-            }
-        })
-        .collect::<HashSet<usize>>();
+    let all_claims = claims.iter().map(|claim| claim.id).collect::<HashSet<_>>();
+    let non_overlapping = all_claims.difference(&overlapping).next();
 
-    for claim in claims {
-        if !overlapping_claims.contains(&claim.id) {
-            return claim.id;
-        }
+    if let Some(ans) = non_overlapping {
+        return *ans;
     }
 
     panic!("did not find non overlapping");
@@ -135,13 +117,13 @@ fn process_claims_2(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
 impl Solution for Day03 {
     fn part1(&self, input: &str) -> String {
         let claims = parse(input);
-        let count = process_claims(&claims, (1000, 1000));
+        let count = count_overlapping_squares(&claims, (1000, 1000));
         format!("{count}")
     }
 
     fn part2(&self, input: &str) -> String {
         let claims = parse(input);
-        let id = process_claims_2(&claims, (1000, 1000));
+        let id = find_non_overlapping_claim(&claims, (1000, 1000));
         format!("{id}")
     }
 }
@@ -157,7 +139,7 @@ mod tests {
 #3 @ 5,5: 2x2";
 
         let expected = 4;
-        let actual = process_claims(&parse(claims), (11, 9));
+        let actual = count_overlapping_squares(&parse(claims), (11, 9));
         assert_eq!(actual, expected);
     }
 
@@ -168,7 +150,7 @@ mod tests {
 #3 @ 5,5: 2x2";
 
         let expected = 3;
-        let actual = process_claims_2(&parse(claims), (11, 9));
+        let actual = find_non_overlapping_claim(&parse(claims), (11, 9));
         assert_eq!(actual, expected);
     }
 }
