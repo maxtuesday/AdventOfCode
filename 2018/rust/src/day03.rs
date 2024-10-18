@@ -1,7 +1,10 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::solution::Solution;
 
 pub struct Day03;
 
+#[derive(Hash, Eq, PartialEq, PartialOrd)]
 struct Pos {
     x: usize,
     y: usize,
@@ -92,6 +95,43 @@ fn process_claims(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
     count
 }
 
+fn process_claims_2(claims: &Vec<Claim>, grid_size: (usize, usize)) -> usize {
+    let mut grid: HashMap<Pos, Vec<usize>> = HashMap::new();
+
+    for claim in claims {
+        let id = claim.id;
+        let y = claim.origin.y;
+        let x = claim.origin.x;
+        for r in y..y + claim.height {
+            for c in x..x + claim.width {
+                grid.entry(Pos { x: c, y: r })
+                    .and_modify(|v| v.push(id))
+                    .or_insert(vec![id]);
+            }
+        }
+    }
+
+    // let mut overlapping_claims = HashSet::new();
+    let overlapping_claims = grid
+        .iter()
+        .flat_map(|(_, claims)| {
+            if claims.len() > 1 {
+                claims.clone()
+            } else {
+                vec![]
+            }
+        })
+        .collect::<HashSet<usize>>();
+
+    for claim in claims {
+        if !overlapping_claims.contains(&claim.id) {
+            return claim.id;
+        }
+    }
+
+    panic!("did not find non overlapping");
+}
+
 impl Solution for Day03 {
     fn part1(&self, input: &str) -> String {
         let claims = parse(input);
@@ -100,7 +140,9 @@ impl Solution for Day03 {
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let claims = parse(input);
+        let id = process_claims_2(&claims, (1000, 1000));
+        format!("{id}")
     }
 }
 
@@ -116,6 +158,17 @@ mod tests {
 
         let expected = 4;
         let actual = process_claims(&parse(claims), (11, 9));
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_process_claims_2() {
+        let claims = r"#1 @ 1,3: 4x4
+#2 @ 3,1: 4x4
+#3 @ 5,5: 2x2";
+
+        let expected = 3;
+        let actual = process_claims_2(&parse(claims), (11, 9));
         assert_eq!(actual, expected);
     }
 }
