@@ -3,6 +3,7 @@ use std::{collections::HashMap, env, fs, time::Instant};
 use solution::Solution;
 
 mod day01;
+mod day02;
 mod solution;
 
 type SolutionSet = HashMap<usize, Box<dyn Solution>>;
@@ -40,6 +41,7 @@ fn main() {
 
     let solutions: SolutionSet = HashMap::from([
         day_entry(1, day01::Day01 {}),
+        day_entry(2, day02::Day02 {}),
     ]);
 
     match day {
