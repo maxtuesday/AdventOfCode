@@ -46,7 +46,7 @@ fn search_dir(
     return true;
 }
 
-fn search(r: usize, c: usize, grid: &Vec<Vec<char>>) -> usize {
+fn search_xmas(r: usize, c: usize, grid: &Vec<Vec<char>>) -> usize {
     let deltas = vec![
         (1, 0),
         (-1, 0),
@@ -63,6 +63,55 @@ fn search(r: usize, c: usize, grid: &Vec<Vec<char>>) -> usize {
         .count()
 }
 
+fn search_x(r: usize, c: usize, grid: &Vec<Vec<char>>) -> Option<()> {
+    // r and c should be an A, so we want to check the surrounding corners
+
+    let top_left = grid
+        .get(r.checked_add_signed(-1)?)?
+        .get(c.checked_add_signed(-1)?)?
+        .to_string();
+    let top_right = grid
+        .get(r.checked_add_signed(-1)?)?
+        .get(c.checked_add_signed(1)?)?
+        .to_string();
+    let bottom_left = grid
+        .get(r.checked_add_signed(1)?)?
+        .get(c.checked_add_signed(-1)?)?
+        .to_string();
+    let bottom_right = grid
+        .get(r.checked_add_signed(1)?)?
+        .get(c.checked_add_signed(1)?)?
+        .to_string();
+    let cross = vec![top_left, top_right, bottom_left, bottom_right].join("");
+    let cross = cross.as_str();
+
+    // Check layouts:
+    // M . M
+    // . A .
+    // S . S
+    // MMSS
+
+    // M . S
+    // . A .
+    // M . S
+    // MSMS
+
+    // S . S
+    // . A .
+    // M . M
+    // SSMM
+
+    // S . M
+    // . A .
+    // S . M
+    // SMSM
+    if matches!(cross, "MMSS" | "MSMS" | "SSMM" | "SMSM") {
+        Some(())
+    } else {
+        None
+    }
+}
+
 impl Solution for Day04 {
     fn part1(&self, input: &str) -> String {
         let grid = parse(input);
@@ -74,7 +123,7 @@ impl Solution for Day04 {
         for r in 0..grid.len() {
             for c in 0..grid[0].len() {
                 if grid[r][c] == 'X' {
-                    found += search(r, c, &grid);
+                    found += search_xmas(r, c, &grid);
                 }
             }
         }
@@ -82,6 +131,16 @@ impl Solution for Day04 {
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let grid = parse(input);
+
+        let mut found = 0;
+        for r in 0..grid.len() {
+            for c in 0..grid[0].len() {
+                if grid[r][c] == 'A' && search_x(r, c, &grid).is_some() {
+                    found += 1;
+                }
+            }
+        }
+        format!("{found}")
     }
 }
