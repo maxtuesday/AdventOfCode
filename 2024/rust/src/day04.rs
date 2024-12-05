@@ -19,31 +19,16 @@ fn search_dir(
     grid: &Vec<Vec<char>>,
     r_delta: isize,
     c_delta: isize,
-) -> bool {
+) -> Option<()> {
     for i in 1..=3 {
-        match r.checked_add_signed(r_delta) {
-            Some(next_r) => match grid.get(next_r) {
-                Some(row) => {
-                    r = next_r;
-                    match c.checked_add_signed(c_delta) {
-                        Some(next_c) => match row.get(next_c) {
-                            Some(char) => {
-                                c = next_c;
-                                if *char != TARGET[i] as char {
-                                    return false;
-                                }
-                            }
-                            None => return false,
-                        },
-                        None => return false,
-                    }
-                }
-                None => return false,
-            },
-            None => return false,
+        r = r.checked_add_signed(r_delta)?;
+        c = c.checked_add_signed(c_delta)?;
+        let char = grid.get(r)?.get(c)?;
+        if *char != TARGET[i] as char {
+            return None;
         }
     }
-    return true;
+    return Some(());
 }
 
 fn search_xmas(r: usize, c: usize, grid: &Vec<Vec<char>>) -> usize {
@@ -58,14 +43,13 @@ fn search_xmas(r: usize, c: usize, grid: &Vec<Vec<char>>) -> usize {
         (-1, 1),
     ];
     deltas
-        .iter()
-        .filter(|(r_delta, c_delta)| search_dir(r, c, grid, *r_delta, *c_delta))
+        .into_iter()
+        .filter_map(|(r_delta, c_delta)| search_dir(r, c, grid, r_delta, c_delta))
         .count()
 }
 
 fn search_x(r: usize, c: usize, grid: &Vec<Vec<char>>) -> Option<()> {
     // r and c should be an A, so we want to check the surrounding corners
-
     let top_left = grid
         .get(r.checked_add_signed(-1)?)?
         .get(c.checked_add_signed(-1)?)?
@@ -86,25 +70,10 @@ fn search_x(r: usize, c: usize, grid: &Vec<Vec<char>>) -> Option<()> {
     let cross = cross.as_str();
 
     // Check layouts:
-    // M . M
-    // . A .
-    // S . S
-    // MMSS
-
-    // M . S
-    // . A .
-    // M . S
-    // MSMS
-
-    // S . S
-    // . A .
-    // M . M
-    // SSMM
-
-    // S . M
-    // . A .
-    // S . M
-    // SMSM
+    // M . M   M . S  S . S  S . M 
+    // . A .   . A .  . A .  . A .
+    // S . S   M . S  M . M  S . M
+    // MMSS    MSMS   SSMM   SMSM
     if matches!(cross, "MMSS" | "MSMS" | "SSMM" | "SMSM") {
         Some(())
     } else {
