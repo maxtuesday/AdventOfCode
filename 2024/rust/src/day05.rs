@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     cmp::Ordering,
     collections::{HashMap, HashSet},
 };
@@ -68,23 +67,19 @@ fn fix_update(mut update: Vec<u32>, ordering_rules: &OrderingRules) -> Vec<u32> 
     // We can sort the list based on ordering rules
     update.sort_by(|a, b| {
         // check if b is in a_next
-        let a_next = ordering_rules
-            .get(a)
-            .map(Cow::Borrowed)
-            .unwrap_or_else(|| Cow::Owned(HashSet::new()));
-        if a_next.contains(b) {
-            // b should come after a
-            return Ordering::Less;
+        if let Some(a_next) = ordering_rules.get(a) {
+            if a_next.contains(b) {
+                // b should come after a
+                return Ordering::Less;
+            }
         }
 
         // check if a is in b_next
-        let b_next = ordering_rules
-            .get(b)
-            .map(Cow::Borrowed)
-            .unwrap_or_else(|| Cow::Owned(HashSet::new()));
-        if b_next.contains(a) {
-            // a should come after b
-            return Ordering::Greater;
+        if let Some(b_next) = ordering_rules.get(b) {
+            if b_next.contains(a) {
+                // a should come after b
+                return Ordering::Greater;
+            }
         }
 
         unimplemented!("If we reach this, then we have ordering rules that are transitive")
