@@ -8,6 +8,7 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
 
 type SolutionSet = HashMap<usize, Box<dyn Solution>>;
 
@@ -48,6 +49,7 @@ fn main() {
         day_entry(3, day03::Day03 {}),
         day_entry(4, day04::Day04 {}),
         day_entry(5, day05::Day05 {}),
+        day_entry(6, day06::Day06 {}),
     ]);
 
     match day {
