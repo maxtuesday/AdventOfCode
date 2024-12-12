@@ -94,23 +94,16 @@ struct ObstructionEncountered {
     travel_dir: Direction,
 }
 
-fn is_loop(
+fn contains_loop(
     start_pos: (usize, usize),
-    new_obstruction_pos: (usize, usize),
-    mut grid: Vec<Vec<char>>,
+    grid: &Vec<Vec<char>>,
 ) -> bool {
     let mut visited: HashSet<ObstructionEncountered> = HashSet::new();
-
-    // set new obstruction
-    grid[new_obstruction_pos.0][new_obstruction_pos.1] = '#';
 
     // Start moving North
     let mut dir = Direction::North;
     let mut pos = start_pos;
     loop {
-        // mark current position as visited
-        grid[pos.0][pos.1] = 'X';
-
         let next = next_pos(pos, &dir, &grid);
         match next {
             Some(next) => {
@@ -146,7 +139,7 @@ impl Solution for Day06 {
     }
 
     fn part2(&self, input: &str) -> String {
-        let grid = parse(input);
+        let mut grid = parse(input);
 
         let starting_pos = get_start_position(&grid);
         let walked = walk(grid.clone());
@@ -154,7 +147,13 @@ impl Solution for Day06 {
 
         let loop_count = visited_positions
             .into_iter()
-            .filter(|pos| is_loop(starting_pos.clone(), *pos, grid.clone()))
+            .filter(|pos| *pos != starting_pos)
+            .filter(|pos| {
+                grid[pos.0][pos.1] = '#'; // add new obstacle
+                let result = contains_loop(starting_pos.clone(), &grid);
+                grid[pos.0][pos.1] = '.'; // revert
+                result
+            })
             .count();
 
         format!("{loop_count}")
