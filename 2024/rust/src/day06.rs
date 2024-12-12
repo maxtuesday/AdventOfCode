@@ -1,7 +1,10 @@
+use std::collections::HashSet;
+
 use crate::solution::Solution;
 
 pub struct Day06;
 
+#[derive(Eq, PartialEq, Hash, Clone)]
 enum Direction {
     North,
     South,
@@ -13,8 +16,16 @@ fn parse(input: &str) -> Vec<Vec<char>> {
     input.lines().map(|line| line.chars().collect()).collect()
 }
 
-fn get(pos: (usize, usize), grid: &Vec<Vec<char>>) -> Option<&char> {
-    grid.get(pos.0)?.get(pos.1)
+fn get_start_position(grid: &Vec<Vec<char>>) -> (usize, usize) {
+    grid.iter()
+        .enumerate()
+        .find_map(|(r, row)| {
+            row.iter()
+                .enumerate()
+                .find(|(_, char)| **char == '^')
+                .map(|(c, _)| (r, c))
+        })
+        .expect("should contain a starting position")
 }
 
 fn next_pos(pos: (usize, usize), dir: &Direction, grid: &Vec<Vec<char>>) -> Option<(usize, usize)> {
@@ -27,18 +38,18 @@ fn next_pos(pos: (usize, usize), dir: &Direction, grid: &Vec<Vec<char>>) -> Opti
     grid.get(next.0)?.get(next.1).map(|_| next)
 }
 
+fn next_dir(dir: Direction) -> Direction {
+    match dir {
+        Direction::North => Direction::East,
+        Direction::South => Direction::West,
+        Direction::East => Direction::South,
+        Direction::West => Direction::North,
+    }
+}
+
 fn walk(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
     // find start position
-    let mut pos = grid
-        .iter()
-        .enumerate()
-        .find_map(|(r, row)| {
-            row.iter()
-                .enumerate()
-                .find(|(_, char)| **char == '^')
-                .map(|(c, _)| (r, c))
-        })
-        .expect("should contain a starting position");
+    let mut pos = get_start_position(&grid);
 
     // Start moving up
     let mut dir = Direction::North;
@@ -53,48 +64,99 @@ fn walk(mut grid: Vec<Vec<char>>) -> Vec<Vec<char>> {
                 if val == '#' {
                     // obstruction
                     // change direction but keep current position
-                    dir = match dir {
-                        Direction::North => Direction::East,
-                        Direction::South => Direction::West,
-                        Direction::East => Direction::South,
-                        Direction::West => Direction::North,
-                    };
+                    dir = next_dir(dir);
                 } else {
                     pos = next;
                 }
-            },
+            }
             None => break,
         }
     }
     grid
 }
 
-fn visited(grid: &Vec<Vec<char>>) -> usize {
-    grid.iter().map(|row| {
-        row.iter().filter(|char| **char == 'X').count()
-    }).sum()
+fn visited(grid: &Vec<Vec<char>>) -> Vec<(usize, usize)> {
+    grid.iter()
+        .enumerate()
+        .flat_map(|(r, row)| {
+            row.iter()
+                .enumerate()
+                .filter(|(_, char)| **char == 'X')
+                .map(|(c, _)| (r, c))
+                .collect::<Vec<(usize, usize)>>()
+        })
+        .collect()
 }
 
-fn display(grid: &Vec<Vec<char>>) {
-    grid.iter().for_each(|row| {
-        row.iter().for_each(|char| {
-            print!("{char}");
-        });
-        println!();
-    });
+#[derive(Hash, Eq, PartialEq)]
+struct ObstructionEncountered {
+    pos: (usize, usize),
+    travel_dir: Direction,
+}
+
+fn is_loop(
+    start_pos: (usize, usize),
+    new_obstruction_pos: (usize, usize),
+    mut grid: Vec<Vec<char>>,
+) -> bool {
+    let mut visited: HashSet<ObstructionEncountered> = HashSet::new();
+
+    // set new obstruction
+    grid[new_obstruction_pos.0][new_obstruction_pos.1] = '#';
+
+    // Start moving North
+    let mut dir = Direction::North;
+    let mut pos = start_pos;
+    loop {
+        // mark current position as visited
+        grid[pos.0][pos.1] = 'X';
+
+        let next = next_pos(pos, &dir, &grid);
+        match next {
+            Some(next) => {
+                let val = grid[next.0][next.1];
+                if val == '#' {
+                    // obstruction
+                    // change direction but keep current position
+                    dir = next_dir(dir);
+
+                    let obs_hit = ObstructionEncountered {
+                        pos: next,
+                        travel_dir: dir.clone(),
+                    };
+                    if visited.contains(&obs_hit) {
+                        return true;
+                    }
+                    visited.insert(obs_hit);
+                } else {
+                    pos = next;
+                }
+            }
+            None => return false,
+        }
+    }
 }
 
 impl Solution for Day06 {
     fn part1(&self, input: &str) -> String {
         let grid = parse(input);
         let walked = walk(grid);
-        display(&walked);
-
-        let visited_count = visited(&walked);
+        let visited_count = visited(&walked).len();
         format!("{visited_count}")
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let grid = parse(input);
+
+        let starting_pos = get_start_position(&grid);
+        let walked = walk(grid.clone());
+        let visited_positions = visited(&walked);
+
+        let loop_count = visited_positions
+            .into_iter()
+            .filter(|pos| is_loop(starting_pos.clone(), *pos, grid.clone()))
+            .count();
+
+        format!("{loop_count}")
     }
 }
