@@ -30,8 +30,8 @@ impl Calibration {
         Self { result, constants }
     }
 
-    fn test(&self, operators: Vec<Operator>) -> bool {
-        self.evaluate(0, self.constants[0], &operators)
+    fn test(&self, operators: &Vec<Operator>) -> bool {
+        self.evaluate(0, self.constants[0], operators)
     }
 
     fn evaluate(&self, index: usize, result: usize, operators: &Vec<Operator>) -> bool {
@@ -67,26 +67,27 @@ fn parse(input: &str) -> Vec<Calibration> {
     input.lines().map(Calibration::from_line).collect()
 }
 
+fn valid_calibration_total(calibrations: Vec<Calibration>, operators: Vec<Operator>) -> usize {
+    calibrations
+        .iter()
+        .filter(|cal| cal.test(&operators))
+        .map(|cal| cal.result)
+        .sum()
+}
+
 impl Solution for Day07 {
     fn part1(&self, input: &str) -> String {
         let calibrations = parse(input);
-        let total = calibrations
-            .iter()
-            .filter(|cal| cal.test(vec![Operator::Add, Operator::Mul]))
-            .map(|cal| cal.result)
-            .sum::<usize>();
-
+        let total = valid_calibration_total(calibrations, vec![Operator::Add, Operator::Mul]);
         format!("{total}")
     }
 
     fn part2(&self, input: &str) -> String {
         let calibrations = parse(input);
-        let total = calibrations
-            .iter()
-            .filter(|cal| cal.test(vec![Operator::Add, Operator::Mul, Operator::Concat]))
-            .map(|cal| cal.result)
-            .sum::<usize>();
-
+        let total = valid_calibration_total(
+            calibrations,
+            vec![Operator::Add, Operator::Mul, Operator::Concat],
+        );
         format!("{total}")
     }
 }
