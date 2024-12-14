@@ -17,6 +17,40 @@ struct LogEntry {
     date_time: NaiveDateTime,
 }
 
+#[derive(Debug)]
+struct Guard {
+    id: usize,
+    sleep_ranges: Vec<Range<u32>>,
+}
+
+struct MinuteFrequency {
+    minute: usize,
+    frequency: usize,
+}
+
+impl Guard {
+    fn total_sleep_time(&self) -> u32 {
+        self.sleep_ranges
+            .iter()
+            .map(|range| range.end - range.start)
+            .sum::<u32>()
+    }
+
+    fn most_frequent_minute(&self) -> MinuteFrequency {
+        (0..60)
+            .map(|minute| {
+                let frequency = self
+                    .sleep_ranges
+                    .iter()
+                    .filter(|range| range.contains(&(minute as u32)))
+                    .count();
+                MinuteFrequency { minute, frequency }
+            })
+            .max_by_key(|minute_frequency| minute_frequency.frequency)
+            .expect("should contain at least one minute frequency entry")
+    }
+}
+
 fn parse_logs(input: &str) -> Vec<LogEntry> {
     // Example log entries:
     // [1518-11-01 00:00] Guard #10 begins shift
@@ -55,8 +89,39 @@ fn parse_logs(input: &str) -> Vec<LogEntry> {
             Some(LogEntry { event, date_time })
         })
         .collect::<Vec<_>>();
-    logs.sort_by(|a, b| a.date_time.cmp(&b.date_time));
+    logs.sort_by_key(|log| log.date_time);
     logs
+}
+
+fn create_guards(logs: Vec<LogEntry>) -> Vec<Guard> {
+    // iterate through logs and handle each event to find sleep windows for a guard
+    let mut guards: HashMap<usize, Guard> = HashMap::new();
+    let mut current_id = 0;
+    let mut sleep_start = 0;
+    for log in logs {
+        match log.event {
+            LogEvent::BeginShift { guard_id } => {
+                current_id = guard_id;
+            }
+            LogEvent::FallAsleep => sleep_start = log.date_time.time().minute(),
+            LogEvent::WakeUp => {
+                let duration = Range {
+                    start: sleep_start,
+                    end: log.date_time.time().minute(),
+                };
+                guards
+                    .entry(current_id)
+                    .and_modify(|entry| {
+                        entry.sleep_ranges.push(duration.clone());
+                    })
+                    .or_insert(Guard {
+                        id: current_id,
+                        sleep_ranges: vec![duration],
+                    });
+            }
+        }
+    }
+    guards.into_values().collect::<Vec<Guard>>()
 }
 
 impl Solution for Day04 {
@@ -64,80 +129,27 @@ impl Solution for Day04 {
         // Sort guards
         // Find guard will most sleep time
         // Given that guard, find the minute they slept the most
-
         let logs = parse_logs(input);
-
-        // iterate through logs and handle each event to find sleep windows for a guard
-
-        let mut guards: HashMap<usize, Vec<Range<u32>>> = HashMap::new();
-
-        let mut current_id = 0;
-        let mut sleep_start = 0;
-        for log in logs {
-            match log.event {
-                LogEvent::BeginShift { guard_id } => {
-                    current_id = guard_id;
-                }
-                LogEvent::FallAsleep => sleep_start = log.date_time.time().minute(),
-                LogEvent::WakeUp => {
-                    let duration = Range {
-                        start: sleep_start,
-                        end: log.date_time.time().minute(),
-                    };
-                    guards
-                        .entry(current_id)
-                        .and_modify(|entry| {
-                            entry.push(duration.clone());
-                        })
-                        .or_insert(vec![duration]);
-                }
-            }
-        }
+        let guards = create_guards(logs);
 
         // Find guard that sleeps the most
-        let mut guards_and_sleep_time = guards
+        let sleepiest_guard = guards
             .iter()
-            .map(|guard| {
-                let total_sleep_time = guard
-                    .1
-                    .iter()
-                    .map(|range| range.end - range.start)
-                    .sum::<u32>();
-                (guard, total_sleep_time)
-            })
-            .collect::<Vec<_>>();
-        guards_and_sleep_time.sort_by(|a, b| b.1.cmp(&a.1));
-
-        let sleepiest_guard = guards_and_sleep_time
-            .first()
-            .expect("should at least one guard");
-
-        let mut minutes: Vec<usize> = vec![0; 60];
-        (0..minutes.len()).for_each(|minute| {
-            minutes[minute] = sleepiest_guard
-                .0
-                 .1
-                .iter()
-                .filter(|range| range.contains(&(minute as u32)))
-                .count();
-        });
-
-        let mut most_slept_minute = 0;
-        let mut max_freq = 0;
-        minutes.into_iter().enumerate().for_each(|(minute, freq)| {
-            if freq > max_freq {
-                most_slept_minute = minute;
-                max_freq = freq;
-            }
-        });
-
-        let ans = sleepiest_guard.0 .0 * most_slept_minute;
-
+            .max_by_key(|guard| guard.total_sleep_time())
+            .unwrap();
+        let ans = sleepiest_guard.id * sleepiest_guard.most_frequent_minute().minute;
         format!("{ans}")
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let logs = parse_logs(input);
+        let guards = create_guards(logs);
+        let guard = guards
+            .iter()
+            .max_by_key(|guard| guard.most_frequent_minute().frequency)
+            .unwrap();
+        let ans = guard.id * guard.most_frequent_minute().minute;
+        format!("{ans}")
     }
 }
 
@@ -145,9 +157,7 @@ impl Solution for Day04 {
 mod tests {
     use super::*;
 
-    #[test]
-    fn part1_sample() {
-        let input = "[1518-11-01 00:00] Guard #10 begins shift
+    const INPUT: &str = "[1518-11-01 00:00] Guard #10 begins shift
 [1518-11-01 00:05] falls asleep
 [1518-11-01 00:25] wakes up
 [1518-11-01 00:30] falls asleep
@@ -166,6 +176,14 @@ mod tests {
 [1518-11-05 00:55] wakes up
 
 ";
-        assert_eq!(Day04 {}.part1(input), String::from("240"));
+
+    #[test]
+    fn part1_example() {
+        assert_eq!(Day04.part1(INPUT), String::from("240"));
+    }
+
+    #[test]
+    fn part2_example() {
+        assert_eq!(Day04.part2(INPUT), String::from("4455"));
     }
 }
