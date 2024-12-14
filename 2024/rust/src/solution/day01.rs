@@ -1,6 +1,6 @@
 use std::iter::zip;
 
-use crate::solution::Solution;
+use super::Solution;
 
 pub struct Day01;
 

@@ -1,4 +1,4 @@
-use crate::solution::Solution;
+use super::Solution;
 
 pub struct Day02;
 

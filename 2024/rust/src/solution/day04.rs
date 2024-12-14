@@ -1,6 +1,6 @@
 use std::char;
 
-use crate::solution::Solution;
+use super::Solution;
 
 pub struct Day04;
 

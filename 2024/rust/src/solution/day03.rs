@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::solution::Solution;
+use super::Solution;
 
 pub struct Day03;
 

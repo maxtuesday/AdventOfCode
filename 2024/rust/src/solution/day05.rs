@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use crate::solution::Solution;
+use super::Solution;
 
 pub struct Day05;
 
