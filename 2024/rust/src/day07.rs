@@ -8,6 +8,12 @@ struct Calibration {
     constants: Vec<usize>,
 }
 
+enum Operator {
+    Add,
+    Mul,
+    Concat,
+}
+
 impl Calibration {
     fn from_line(line: &str) -> Self {
         // R: X Y Z...
@@ -24,12 +30,11 @@ impl Calibration {
         Self { result, constants }
     }
 
-    fn test(&self) -> bool {
-        // This will attempt to create an equation with the operators: +, *
-        self.backtrack(0, self.constants[0])
+    fn test(&self, operators: Vec<Operator>) -> bool {
+        self.evaluate(0, self.constants[0], &operators)
     }
 
-    fn backtrack(&self, index: usize, result: usize) -> bool {
+    fn evaluate(&self, index: usize, result: usize, operators: &Vec<Operator>) -> bool {
         let next_index = index + 1;
         if next_index >= self.constants.len() {
             return result == self.result;
@@ -41,8 +46,20 @@ impl Calibration {
             return false;
         }
 
-        self.backtrack(next_index, result + self.constants[next_index])
-            || self.backtrack(next_index, result * self.constants[next_index])
+        let val = self.constants[next_index];
+        for op in operators {
+            let result = match op {
+                Operator::Add => result + val,
+                Operator::Mul => result * val,
+                Operator::Concat => format!("{result}{val}")
+                    .parse::<usize>()
+                    .expect("concat produces valid number"),
+            };
+            if self.evaluate(next_index, result, operators) {
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -53,15 +70,24 @@ fn parse(input: &str) -> Vec<Calibration> {
 impl Solution for Day07 {
     fn part1(&self, input: &str) -> String {
         let calibrations = parse(input);
-        let total = calibrations.iter().filter(|cal| cal.test()).map(|cal| {
-            cal.result
-        }).sum::<usize>();
+        let total = calibrations
+            .iter()
+            .filter(|cal| cal.test(vec![Operator::Add, Operator::Mul]))
+            .map(|cal| cal.result)
+            .sum::<usize>();
 
         format!("{total}")
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let calibrations = parse(input);
+        let total = calibrations
+            .iter()
+            .filter(|cal| cal.test(vec![Operator::Add, Operator::Mul, Operator::Concat]))
+            .map(|cal| cal.result)
+            .sum::<usize>();
+
+        format!("{total}")
     }
 }
 
@@ -83,7 +109,15 @@ mod tests {
     fn test_part1_example() {
         let expected = String::from("3749");
         let actual = Day07.part1(INPUT);
-        
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_part2_example() {
+        let expected = String::from("11387");
+        let actual = Day07.part2(INPUT);
+
         assert_eq!(actual, expected);
     }
 }
