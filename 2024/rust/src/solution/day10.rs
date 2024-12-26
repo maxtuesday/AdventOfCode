@@ -16,6 +16,24 @@ fn parse(input: &str) -> Grid {
     input.lines().map(|line| line.chars().collect()).collect()
 }
 
+fn get_trailheads(grid: &Grid) -> Vec<Pos> {
+    grid.iter()
+        .enumerate()
+        .flat_map(|(r, row)| {
+            row.iter()
+                .enumerate()
+                .filter_map(|(c, val)| {
+                    if *val == '0' {
+                        Some(Pos { r, c })
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect()
+}
+
 fn is_oob(pos: &Pos, grid: &Grid) -> bool {
     pos.r >= grid.len() || pos.c >= grid[0].len()
 }
@@ -38,7 +56,7 @@ fn next_positions(pos: Pos, grid: &Grid) -> Vec<Pos> {
         .collect()
 }
 
-fn dfs(pos: Pos, grid: &Grid, visited: &mut HashSet<Pos>) -> usize {
+fn score_trail(pos: Pos, grid: &Grid, visited: &mut HashSet<Pos>) -> usize {
     if grid[pos.r][pos.c] == '9' && !visited.contains(&pos) {
         visited.insert(pos);
         return 1;
@@ -46,7 +64,18 @@ fn dfs(pos: Pos, grid: &Grid, visited: &mut HashSet<Pos>) -> usize {
 
     next_positions(pos, grid)
         .into_iter()
-        .map(|next| dfs(next, grid, visited))
+        .map(|next| score_trail(next, grid, visited))
+        .sum()
+}
+
+fn rate_trail(pos: Pos, grid: &Grid) -> usize {
+    if grid[pos.r][pos.c] == '9' {
+        return 1;
+    }
+
+    next_positions(pos, grid)
+        .into_iter()
+        .map(|next| rate_trail(next, grid))
         .sum()
 }
 
@@ -55,28 +84,12 @@ impl Solution for Day10 {
         let grid = parse(input);
 
         // Gather all starting positions
-        let starting_positions = grid
-            .iter()
-            .enumerate()
-            .flat_map(|(r, row)| {
-                row.iter()
-                    .enumerate()
-                    .filter_map(|(c, val)| {
-                        if *val == '0' {
-                            Some(Pos { r, c })
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
-
-        let score = starting_positions
+        let trailheads = get_trailheads(&grid);
+        let score = trailheads
             .into_iter()
             .map(|pos| {
                 let mut visited_peaks = HashSet::new();
-                dfs(pos.clone(), &grid, &mut visited_peaks)
+                score_trail(pos.clone(), &grid, &mut visited_peaks)
             })
             .sum::<usize>();
 
@@ -84,7 +97,14 @@ impl Solution for Day10 {
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let grid = parse(input);
+        let trailheads = get_trailheads(&grid);
+        let rating = trailheads
+            .into_iter()
+            .map(|pos| rate_trail(pos, &grid))
+            .sum::<usize>();
+
+        format!("{rating}")
     }
 }
 
@@ -118,6 +138,28 @@ mod tests {
     fn part1_large_input() {
         let expected = String::from("36");
         let actual = Day10.part1(LARGE_INPUT);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn part2_medium_input() {
+        let input = "012345
+123456
+234567
+345678
+4.6789
+56789.";
+        let expected = String::from("227");
+        let actual = Day10.part2(input);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn part2_large_input() {
+        let expected = String::from("81");
+        let actual = Day10.part2(LARGE_INPUT);
 
         assert_eq!(actual, expected);
     }
