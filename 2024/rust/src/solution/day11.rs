@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::Solution;
 
 pub struct Day11;
@@ -11,7 +13,7 @@ fn count_digits(mut num: u64) -> u32 {
     count
 }
 
-fn blink(stone: u64) -> (u64, Option<u64>) {
+fn transform_stone(stone: u64) -> (u64, Option<u64>) {
     // Rules:
     // - If the stone is engraved with the number 0,
     //  it is replaced by a stone engraved with the number 1.
@@ -39,28 +41,47 @@ fn blink(stone: u64) -> (u64, Option<u64>) {
     (stone * 2024, None)
 }
 
+fn blink(stone: u64, blinks: u32, cache: &mut HashMap<(u64, u32), u64>) -> u64 {
+    if blinks == 0 {
+        return 1;
+    }
+
+    let key = (stone, blinks);
+    if let Some(val) = cache.get(&key) {
+        return *val;
+    }
+
+    let (left, right) = transform_stone(stone);
+    let lc = blink(left, blinks - 1, cache);
+    let rc = if let Some(r) = right {
+        blink(r, blinks - 1, cache)
+    } else {
+        0
+    };
+
+    let res = lc + rc;
+    cache.entry(key).and_modify(|val| *val = res).or_insert(res);
+    res
+}
+
+fn process_blinks(input: &str, blinks: u32) -> u64 {
+    let mut cache: HashMap<(u64, u32), u64> = HashMap::new();
+    input
+        .split_whitespace()
+        .filter_map(|num| num.parse::<u64>().ok())
+        .map(|stone| blink(stone, blinks, &mut cache))
+        .sum::<u64>()
+}
+
 impl Solution for Day11 {
     fn part1(&self, input: &str) -> String {
-        let mut stones = input
-            .split_whitespace()
-            .filter_map(|num| num.parse::<u64>().ok())
-            .collect::<Vec<_>>();
-
-        let res = (0..25).fold(stones, |acc, _|  {
-            acc.into_iter().flat_map(|stone| {
-                let (l, r) = blink(stone);
-                match r {
-                    Some(r) => vec![l, r],
-                    None => vec![l],
-                }
-            }).collect::<Vec<_>>()
-        });
-
-        format!("{}", res.len())
+        let count = process_blinks(input, 25);
+        format!("{count}")
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let count = process_blinks(input, 75);
+        format!("{count}")
     }
 }
 
@@ -69,7 +90,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn part1_blink_6_times() {
+    fn part1_sample() {
         let input = "125 17";
         let expected = "55312";
         let actual = Day11.part1(input);
