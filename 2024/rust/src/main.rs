@@ -48,6 +48,7 @@ fn main() {
         day_entry(8, day08::Day08 {}),
         day_entry(9, day09::Day09 {}),
         day_entry(10, day10::Day10 {}),
+        day_entry(11, day11::Day11 {}),
     ]);
 
     match day {
