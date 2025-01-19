@@ -10,40 +10,60 @@ struct Coord {
     y: usize,
 }
 
+fn parse(input: &str) -> Vec<Coord> {
+    input
+        .lines()
+        .enumerate()
+        .map(|(id, line)| {
+            let (x, y) = line.split_once(", ").unwrap();
+            let x = x.parse::<usize>().unwrap();
+            let y = y.parse::<usize>().unwrap();
+            Coord { id, x, y }
+        })
+        .collect::<Vec<_>>()
+}
+
+fn create_grid<T: Clone>(coords: &[Coord], default_value: T) -> Vec<Vec<T>> {
+    // find max x and y bounds for simulating the grid
+    let max_x = coords.iter().max_by(|a, b| a.x.cmp(&b.x)).unwrap().x + 2;
+    let max_y = coords.iter().max_by(|a, b| a.y.cmp(&b.y)).unwrap().y + 2;
+
+    vec![vec![default_value; max_x]; max_y]
+}
+
 fn get_distance(loc: (usize, usize), coord: &Coord) -> usize {
     loc.0.abs_diff(coord.x) + loc.1.abs_diff(coord.y)
 }
 
-fn display_grid(grid: &Vec<Vec<i32>>) {
-    for i in 0..grid.len() {
-        for j in 0..grid[0].len() {
-            print!(" {:2} ", grid[i][j])
+fn safe_area(coords: &[Coord], max_total_distance: usize) -> usize {
+    // for each location in the grid, calculate the distance from all coordinates
+    let mut grid = create_grid(coords, 0);
+    for y in 0..grid.len() {
+        for x in 0..grid[0].len() {
+            grid[y][x] = coords
+                .iter()
+                .map(|coord| get_distance((x, y), coord))
+                .sum::<usize>();
         }
-        println!()
     }
-    println!()
+
+    // count locations that have a distance less than max_total_distance
+    grid.into_iter()
+        .map(|row| {
+            row.into_iter()
+                .filter(|dist| *dist < max_total_distance)
+                .count()
+        })
+        .sum()
 }
 
 impl Solution for Day06 {
     fn part1(&self, input: &str) -> String {
-        let coords = input
-            .lines()
-            .enumerate()
-            .map(|(id, line)| {
-                let (x, y) = line.split_once(", ").unwrap();
-                let x = x.parse::<usize>().unwrap();
-                let y = y.parse::<usize>().unwrap();
-                Coord { id, x, y }
-            })
-            .collect::<Vec<_>>();
+        let coords = parse(input);
 
-        // find max x and y bounds for simulating the grid
-        let max_x = coords.iter().max_by(|a, b| a.x.cmp(&b.x)).unwrap().x + 2;
-        let max_y = coords.iter().max_by(|a, b| a.y.cmp(&b.y)).unwrap().y + 2;
-
-        let mut grid = vec![vec![-1; max_x]; max_y];
-        for y in 0..max_y {
-            for x in 0..max_x {
+        let mut grid = create_grid(&coords, -1);
+        for y in 0..grid.len() {
+            for x in 0..grid[0].len() {
                 // get distance for each coordinate
                 let coords_and_distances = coords
                     .iter()
@@ -68,8 +88,6 @@ impl Solution for Day06 {
             }
         }
 
-        // display_grid(&grid);
-
         // keep track of the areas for each coordinate
         // check if the coordinate touches the edge of the grid, if so we will want to ignore this area
         let mut areas: HashMap<usize, usize> = HashMap::new();
@@ -90,8 +108,6 @@ impl Solution for Day06 {
             });
         });
 
-        // println!("{:?}", areas);
-
         let max_finite_area = areas
             .iter()
             .filter_map(|(id, area)| {
@@ -108,7 +124,9 @@ impl Solution for Day06 {
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let coords = parse(input);
+        let area = safe_area(&coords, 10_000);
+        format!("{area}")
     }
 }
 
@@ -126,6 +144,21 @@ mod tests {
 8, 9";
         let expected = "17";
         let actual = Day06.part1(input);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn part2_sample() {
+        let input = "1, 1
+1, 6
+8, 3
+3, 4
+5, 5
+8, 9";
+        let expected = 16;
+        let coords = parse(input);
+        let actual = safe_area(&coords, 32);
 
         assert_eq!(actual, expected);
     }
