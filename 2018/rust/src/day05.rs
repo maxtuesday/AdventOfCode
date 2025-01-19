@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::solution::Solution;
 
 pub struct Day05;
@@ -32,7 +34,10 @@ fn process_simple(polymer: &[u8]) -> String {
         }
     }
 
-    reduced.push(polymer[i] as char);
+    if i < n {
+        reduced.push(polymer[i] as char);
+    }
+
     reduced
 }
 
@@ -47,6 +52,12 @@ fn reduce_polymer(input: String) -> String {
     reduce_polymer(reduced)
 }
 
+fn remove_letter(polymer: &str, letter: char) -> String {
+    polymer
+        .replace(letter.to_uppercase().to_string().as_str(), "")
+        .replace(letter.to_lowercase().to_string().as_str(), "")
+}
+
 impl Solution for Day05 {
     fn part1(&self, input: &str) -> String {
         let reduced = reduce_polymer(input.to_string());
@@ -55,7 +66,17 @@ impl Solution for Day05 {
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        // Try removing each letter then reducing
+        let min_len = ('a'..='z')
+            .into_par_iter()
+            .map(|letter| {
+                let polymer = remove_letter(input, letter);
+                let reduced = reduce_polymer(polymer);
+                reduced.len()
+            })
+            .min()
+            .expect("should contain at least one value");
+        format!("{min_len}")
     }
 }
 
@@ -68,6 +89,15 @@ mod tests {
         let input = "dabAcCaCBAcCcaDA";
         let expected = "10";
         let actual = Day05.part1(input);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn part2_sample() {
+        let input = "dabAcCaCBAcCcaDA";
+        let expected = "4";
+        let actual = Day05.part2(input);
 
         assert_eq!(actual, expected);
     }
