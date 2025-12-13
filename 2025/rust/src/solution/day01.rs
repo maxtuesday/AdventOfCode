@@ -39,7 +39,33 @@ impl Solution for Day01 {
     }
 
     fn part2(&self, input: &str) -> String {
-        todo!()
+        let mut pos: i32 = 50;
+        let mut count = 0;
+
+        let ops = parse(input);
+        for (dir, turns) in ops {
+            match dir {
+                "L" => {
+                    for _ in 0..turns {
+                        pos = modulo(pos - 1, 100);
+                        if pos == 0 {
+                            count += 1;
+                        }
+                    }
+                }
+                "R" => {
+                    for _ in 0..turns {
+                        pos = modulo(pos + 1, 100);
+                        if pos == 0 {
+                            count += 1;
+                        }
+                    }
+                }
+                c => unreachable!("got prefix: {c}"),
+            };
+        }
+
+        format!("{count}")
     }
 }
 
@@ -62,6 +88,13 @@ L82";
     fn test_part1() {
         let expected = "3".to_string();
         let actual = Day01.part1(INPUT);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2() {
+        let expected = "6".to_string();
+        let actual = Day01.part2(INPUT);
         assert_eq!(expected, actual);
     }
 }
