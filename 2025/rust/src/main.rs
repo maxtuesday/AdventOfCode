@@ -37,7 +37,8 @@ fn main() {
         Day::Day(val.parse::<usize>().expect("expected a positive integer"))
     });
 
-    let solutions: SolutionSet = HashMap::from([day_entry(1, day01::Day01 {})]);
+    let solutions: SolutionSet =
+        HashMap::from([day_entry(1, day01::Day01 {}), day_entry(2, day02::Day02 {})]);
 
     match day {
         Day::Day(i) => exec_solution(i, &solutions),
